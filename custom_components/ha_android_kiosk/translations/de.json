@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HA Android Kiosk",
+        "description": "Installiere die eigenständige Android-App auf deinem Tablet/Smartphone und öffne danach das Android-Kiosk-Panel in der Sidebar."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Es ist nur eine HA-Android-Kiosk-Instanz erlaubt."
+    }
+  }
+}

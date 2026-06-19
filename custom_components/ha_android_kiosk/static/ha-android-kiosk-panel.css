@@ -1,0 +1,110 @@
+:host {
+  --kiosk-radius: 22px;
+  --kiosk-shadow: 0 18px 50px rgba(0,0,0,.14);
+  --kiosk-soft: color-mix(in srgb, var(--primary-color) 10%, var(--card-background-color));
+  font-family: var(--ha-font-family-body, Inter, Roboto, Arial, sans-serif);
+}
+.wrap ha-card {
+  border-radius: 28px;
+  box-shadow: var(--kiosk-shadow);
+  border: 1px solid color-mix(in srgb, var(--divider-color) 70%, transparent);
+}
+.head {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary-color) 18%, var(--card-background-color)), var(--card-background-color));
+}
+.title {
+  background: linear-gradient(90deg, var(--primary-color), color-mix(in srgb, var(--primary-color) 55%, var(--primary-text-color)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+.side {
+  backdrop-filter: blur(12px);
+}
+.device, .section, .albumCard, .bgItem, .pageItem, .dropzone {
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.device:hover, .albumCard:hover, .bgItem:hover, .pageItem:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(0,0,0,.10);
+}
+.tab {
+  border-radius: 999px !important;
+}
+.tab.active, button:not(.secondary):not(.warn):not(.ghost) {
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--primary-color) 28%, transparent);
+}
+button {
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+}
+button:hover { transform: translateY(-1px); opacity: .96; }
+button:active { transform: translateY(0); }
+.metricBig {
+  min-height: 42px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:10px 12px;
+  border-radius:14px;
+  background:var(--kiosk-soft);
+  font-weight:800;
+  font-size:22px;
+}
+.metricBig span { font-size:13px; color:var(--secondary-text-color); font-weight:700; }
+.helpBox {
+  border-left: 0 !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary-color) 14%, var(--secondary-background-color)), var(--secondary-background-color)) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+.cleanupRow, .deviceTools {
+  background: color-mix(in srgb, var(--card-background-color) 80%, var(--secondary-background-color));
+}
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid color-mix(in srgb, var(--primary-color) 70%, transparent);
+  border-color: var(--primary-color) !important;
+}
+.bgItem img {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
+}
+@media (prefers-color-scheme: dark) {
+  :host { --kiosk-shadow: 0 18px 50px rgba(0,0,0,.32); }
+}
+.sectionHead {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+  margin-bottom:14px;
+}
+.heroSection {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary-color) 12%, var(--card-background-color)), var(--card-background-color));
+}
+.metricGrid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:10px;
+  margin-top:14px;
+}
+.metricCard {
+  border:1px solid color-mix(in srgb, var(--divider-color) 80%, transparent);
+  border-radius:16px;
+  padding:12px;
+  background:color-mix(in srgb, var(--card-background-color) 86%, var(--secondary-background-color));
+}
+.metricLabel {
+  color:var(--secondary-text-color);
+  font-size:12px;
+  font-weight:700;
+  margin-bottom:4px;
+}
+.metricValue {
+  font-size:20px;
+  font-weight:850;
+  letter-spacing:-.02em;
+}
+.richChecks {
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+@media(max-width:980px){
+  .sectionHead, .metricGrid, .richChecks { grid-template-columns:1fr; display:grid; }
+}

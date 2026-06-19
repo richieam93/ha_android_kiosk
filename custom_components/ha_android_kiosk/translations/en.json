@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HA Android Kiosk",
+        "description": "Install the standalone Android app on your tablet/phone, then open the Android Kiosk panel from the sidebar."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Only one HA Android Kiosk instance is allowed."
+    }
+  }
+}

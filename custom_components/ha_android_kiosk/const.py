@@ -1,0 +1,9 @@
+DOMAIN = "ha_android_kiosk"
+PANEL_URL = "ha-android-kiosk"
+STATIC_URL = "/ha_android_kiosk_static"
+STORAGE_KEY = "ha_android_kiosk.storage"
+STORAGE_VERSION = 3
+EVENT_COMMAND = "ha_android_kiosk_command"
+EVENT_STATUS = "ha_android_kiosk_status"
+SIGNAL_DEVICE_REGISTERED = f"{DOMAIN}_device_registered"
+SIGNAL_DEVICE_STATE_UPDATED = f"{DOMAIN}_device_state_updated"
