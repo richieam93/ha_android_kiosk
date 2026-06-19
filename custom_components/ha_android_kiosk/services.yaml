@@ -1,6 +1,6 @@
 set_browser_config:
   name: Set browser config
-  description: Setzt WebView-/Browser-Einstellungen wie Startseite, Vollbild, Display wach halten, Auto-Reload, Hintergrund-zuerst-Laden, transparente WebView und User-Agent.
+  description: Setzt WebView-/Browser-Einstellungen wie Startseite, Vollbild, Display wach halten, Auto-Reload, Dashboard-Sprache, Hintergrund-zuerst-Laden, transparente WebView und User-Agent.
   fields:
     device:
       name: Device
@@ -58,6 +58,10 @@ set_browser_config:
       name: Dashboard zoom percent
       description: Standard-Größe des kompletten Dashboards in Prozent. 100 = normal, 120 = größer.
       example: 120
+    dashboard_language:
+      name: Dashboard language
+      description: Sprache für das Home-Assistant-Dashboard im Android-WebView. Erlaubt sind de oder en.
+      example: de
     settings_sync_seconds:
       name: Self sync interval
       description: Sekundenintervall, in dem das Tablet gespeicherte Geräte-, Browser-, Rotation- und Hintergrund-Einstellungen selbstständig von Home Assistant abholt. 0 = aus.
@@ -70,6 +74,23 @@ set_browser_config:
       name: User agent
       description: Optionaler WebView-User-Agent.
       example: ""
+
+set_dashboard_language:
+  name: Set dashboard language
+  description: Stellt die Dashboard-Sprache im Android-WebView auf Deutsch oder Englisch um. Die App schreibt die Sprache in den WebView, setzt Accept-Language und lädt Home Assistant bei Bedarf einmal neu.
+  fields:
+    device:
+      name: Device
+      description: Geräte-ID, Gerätename, Liste oder "all".
+      example: all
+    dashboard_language:
+      name: Dashboard language
+      description: "de für Deutsch oder en für Englisch. Alias: language."
+      example: en
+    language:
+      name: Language
+      description: Optionaler Alias für dashboard_language.
+      example: en
 
 open_url:
   name: Open URL
@@ -87,6 +108,35 @@ open_url:
       name: Page zoom percent
       description: Optionale Größe nur für diese geöffnete Seite. Leer/0 verwendet den Standard oder die Seitenregel.
       example: 125
+
+set_pages:
+  name: Set pages
+  description: Sendet Seitenliste und Rotationseinstellungen an ein oder mehrere Android-Kiosk-Geräte.
+  fields:
+    device:
+      name: Device
+      description: Geräte-ID, Gerätename, Liste oder "all".
+      example: all
+    pages:
+      name: Pages
+      description: Liste von Seiten mit name, url, duration und optional zoom_percent.
+      example: '[{"name":"Home","url":"/lovelace/0","duration":20,"zoom_percent":120}]'
+    duration:
+      name: Default duration
+      description: Standarddauer pro Seite in Sekunden.
+      example: 20
+    auto_rotate:
+      name: Auto rotate
+      description: Automatische Rotation aktivieren.
+      example: true
+    pause_on_touch:
+      name: Pause on touch
+      description: Rotation bei Touch kurz pausieren.
+      example: true
+    touch_pause:
+      name: Touch pause seconds
+      description: Pausendauer nach Touch in Sekunden.
+      example: 60
 
 send_ticker_message:
   name: Send ticker message

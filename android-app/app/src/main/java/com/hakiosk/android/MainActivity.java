@@ -43,6 +43,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebStorage;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -50,6 +51,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -114,6 +116,8 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
     private int visualWatchdogSeconds = 45;
     private int ttsVolumePercent = 100;
     private int mediaVolumePercent = 100;
+    private String appLanguage = "de";
+    private String dashboardLanguage = "de";
     private String preferredAudioStream = "music";
     private boolean forceMaxVolumeForSpeech = true;
     private boolean requestAudioFocus = true;
@@ -248,6 +252,12 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
         super.onCreate(savedInstanceState);
         WebView.setWebContentsDebuggingEnabled(Build.VERSION.SDK_INT >= 19 && AppSettings.getBoolean(this, "debug_webview", false));
         if (handleAuthIntent(getIntent())) return;
+        appLanguage = normalizeDashboardLanguage(AppSettings.get(this, "app_language", AppSettings.get(this, "dashboard_language", "de")));
+        dashboardLanguage = normalizeDashboardLanguage(AppSettings.get(this, "dashboard_language", appLanguage));
+        if (!AppSettings.getBoolean(this, "language_selected", false)) {
+            showLanguageSelection();
+            return;
+        }
         if (!AppSettings.isConfigured(this)) showSettings(); else startKiosk();
     }
 
@@ -299,6 +309,76 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
         return super.dispatchTouchEvent(ev);
     }
 
+    private boolean isEnglishUi() {
+        return "en".equals(normalizeDashboardLanguage(AppSettings.get(this, "app_language", "de")));
+    }
+
+    private String t(String de, String en) {
+        return isEnglishUi() ? en : de;
+    }
+
+    private String normalizeDashboardLanguage(String value) {
+        String text = value == null ? "" : value.trim().toLowerCase(Locale.US);
+        if (text.startsWith("en")) return "en";
+        if (text.startsWith("de")) return "de";
+        return "de";
+    }
+
+    private String dashboardLocale() {
+        return "en".equals(normalizeDashboardLanguage(dashboardLanguage)) ? "en-US" : "de-DE";
+    }
+
+    private void saveLanguageChoice(String language) {
+        appLanguage = normalizeDashboardLanguage(language);
+        dashboardLanguage = appLanguage;
+        AppSettings.put(this, "app_language", appLanguage);
+        AppSettings.put(this, "dashboard_language", dashboardLanguage);
+        AppSettings.putBoolean(this, "language_selected", true);
+    }
+
+    private void showLanguageSelection() {
+        if (wsClient != null) wsClient.stop();
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getWindow().getDecorView().setSystemUiVisibility(0);
+
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setGravity(Gravity.CENTER);
+        box.setPadding(dp(26), dp(26), dp(26), dp(26));
+        box.setBackgroundColor(Color.WHITE);
+
+        TextView title = new TextView(this);
+        title.setText("HA Android Kiosk");
+        title.setTextSize(28);
+        title.setTextColor(Color.BLACK);
+        title.setGravity(Gravity.CENTER);
+        box.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView hint = new TextView(this);
+        hint.setText("Sprache wählen / Choose language\n\nDiese Auswahl steuert die App-Startmaske und die Dashboard-Sprache im WebView.");
+        hint.setTextSize(16);
+        hint.setTextColor(Color.DKGRAY);
+        hint.setGravity(Gravity.CENTER);
+        hint.setPadding(0, dp(14), 0, dp(18));
+        box.addView(hint, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        Button de = button("Deutsch");
+        de.setOnClickListener(v -> {
+            saveLanguageChoice("de");
+            if (!AppSettings.isConfigured(this)) showSettings(); else startKiosk();
+        });
+        box.addView(de, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        Button en = button("English");
+        en.setOnClickListener(v -> {
+            saveLanguageChoice("en");
+            if (!AppSettings.isConfigured(this)) showSettings(); else startKiosk();
+        });
+        box.addView(en, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        setContentView(box);
+    }
+
     private void showSettings() {
         if (wsClient != null) wsClient.stop();
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -319,54 +399,60 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
         box.addView(title);
 
         TextView hint = new TextView(this);
-        hint.setText("Eigenständige Kiosk-App. Trage deine Home-Assistant-URL ein und melde dich wie in der originalen Home-Assistant-App über die Home-Assistant-Login-Seite an. Die App speichert danach automatisch Access-/Refresh-Token und registriert das Gerät.");
+        hint.setText(t("Eigenständige Kiosk-App. Trage deine Home-Assistant-URL ein und melde dich wie in der originalen Home-Assistant-App über die Home-Assistant-Login-Seite an. Die App speichert danach automatisch Access-/Refresh-Token und registriert das Gerät.", "Standalone kiosk app. Enter your Home Assistant URL and sign in through the normal Home Assistant login page. The app stores access/refresh tokens and registers the device automatically."));
         hint.setTextColor(Color.DKGRAY);
         hint.setPadding(0, 0, 0, dp(14));
         box.addView(hint);
 
         EditText haUrl = field("Home-Assistant-URL", AppSettings.baseUrl(this), "http://homeassistant.local:8123", false);
-        EditText token = field("Optional: manueller Long-Lived Access Token", AppSettings.token(this), "Leer lassen, wenn du Login verwenden willst", true);
-        EditText deviceId = field("Geräte-ID", AppSettings.deviceId(this), "wandtablet_kueche", false);
-        EditText name = field("Gerätename", AppSettings.get(this, "device_name", Build.MANUFACTURER + " " + Build.MODEL), "Wandtablet Küche", false);
-        EditText dashboard = field("Standard-Dashboard-Pfad", AppSettings.get(this, "default_url", "/lovelace/0"), "/lovelace/0", false);
-        CheckBox keepAwake = check("Display wach halten", AppSettings.getBoolean(this, "keep_awake", true));
-        CheckBox browserAuth = check("Dashboard nach App-Login automatisch anmelden (wie Companion-App)", AppSettings.getBoolean(this, "browser_external_auth", true));
-        CheckBox startBoot = check("Nach Geräteneustart automatisch starten", AppSettings.getBoolean(this, "start_on_boot", false));
-        CheckBox debugWeb = check("WebView-Debugging aktivieren", AppSettings.getBoolean(this, "debug_webview", false));
+        EditText token = field(t("Optional: manueller Long-Lived Access Token", "Optional: manual long-lived access token"), AppSettings.token(this), t("Leer lassen, wenn du Login verwenden willst", "Leave empty when using login"), true);
+        EditText deviceId = field(t("Geräte-ID", "Device ID"), AppSettings.deviceId(this), "wandtablet_kueche", false);
+        EditText name = field(t("Gerätename", "Device name"), AppSettings.get(this, "device_name", Build.MANUFACTURER + " " + Build.MODEL), "Wandtablet Küche", false);
+        EditText dashboard = field(t("Standard-Dashboard-Pfad", "Default dashboard path"), AppSettings.get(this, "default_url", "/lovelace/0"), "/lovelace/0", false);
+        Spinner dashboardLanguageSelect = new Spinner(this);
+        ArrayAdapter<String> languageAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"Deutsch", "English"});
+        languageAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        dashboardLanguageSelect.setAdapter(languageAdapter);
+        dashboardLanguageSelect.setSelection("en".equals(normalizeDashboardLanguage(AppSettings.get(this, "dashboard_language", AppSettings.get(this, "app_language", "de")))) ? 1 : 0);
+        CheckBox keepAwake = check(t("Display wach halten", "Keep screen on"), AppSettings.getBoolean(this, "keep_awake", true));
+        CheckBox browserAuth = check(t("Dashboard nach App-Login automatisch anmelden (wie Companion-App)", "Automatically sign in dashboard after app login"), AppSettings.getBoolean(this, "browser_external_auth", true));
+        CheckBox startBoot = check(t("Nach Geräteneustart automatisch starten", "Start automatically after device boot"), AppSettings.getBoolean(this, "start_on_boot", false));
+        CheckBox debugWeb = check(t("WebView-Debugging aktivieren", "Enable WebView debugging"), AppSettings.getBoolean(this, "debug_webview", false));
 
         addLabeled(box, "Home Assistant", haUrl);
-        addLabeled(box, "Optionaler Token", token);
-        addLabeled(box, "Geräte-ID", deviceId);
-        addLabeled(box, "Gerätename", name);
-        addLabeled(box, "Dashboard", dashboard);
+        addLabeled(box, t("Optionaler Token", "Optional token"), token);
+        addLabeled(box, t("Geräte-ID", "Device ID"), deviceId);
+        addLabeled(box, t("Gerätename", "Device name"), name);
+        addLabeled(box, t("Dashboard", "Dashboard"), dashboard);
+        addLabeled(box, t("Dashboard-Sprache", "Dashboard language"), dashboardLanguageSelect);
         box.addView(keepAwake);
         box.addView(browserAuth);
         box.addView(startBoot);
         box.addView(debugWeb);
 
-        Button login = button("Mit Home Assistant anmelden");
+        Button login = button(t("Mit Home Assistant anmelden", "Sign in with Home Assistant"));
         login.setOnClickListener(v -> {
-            saveLocalSettings(haUrl, token, deviceId, name, dashboard, keepAwake, browserAuth, startBoot, debugWeb);
+            saveLocalSettings(haUrl, token, deviceId, name, dashboard, dashboardLanguageSelect, keepAwake, browserAuth, startBoot, debugWeb);
             if (AppSettings.baseUrl(this).isEmpty()) {
-                Toast.makeText(this, "Home-Assistant-URL ist erforderlich", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, t("Home-Assistant-URL ist erforderlich", "Home Assistant URL is required"), Toast.LENGTH_LONG).show();
                 return;
             }
             startHomeAssistantLogin();
         });
         box.addView(login);
 
-        Button save = button("Mit manuellem Token starten");
+        Button save = button(t("Mit manuellem Token starten", "Start with manual token"));
         save.setOnClickListener(v -> {
-            saveLocalSettings(haUrl, token, deviceId, name, dashboard, keepAwake, browserAuth, startBoot, debugWeb);
+            saveLocalSettings(haUrl, token, deviceId, name, dashboard, dashboardLanguageSelect, keepAwake, browserAuth, startBoot, debugWeb);
             if (!AppSettings.isConfigured(this)) {
-                Toast.makeText(this, "Bitte anmelden oder einen Token eintragen", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, t("Bitte anmelden oder einen Token eintragen", "Please sign in or enter a token"), Toast.LENGTH_LONG).show();
                 return;
             }
             startKiosk();
         });
         box.addView(save);
 
-        Button writeSettings = button("Android-Systemhelligkeit erlauben");
+        Button writeSettings = button(t("Android-Systemhelligkeit erlauben", "Allow Android system brightness"));
         writeSettings.setOnClickListener(v -> requestWriteSettingsPermission());
         box.addView(writeSettings);
 
@@ -374,13 +460,19 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
     }
 
 
-    private void saveLocalSettings(EditText haUrl, EditText token, EditText deviceId, EditText name, EditText dashboard, CheckBox keepAwake, CheckBox browserAuth, CheckBox startBoot, CheckBox debugWeb) {
+    private void saveLocalSettings(EditText haUrl, EditText token, EditText deviceId, EditText name, EditText dashboard, Spinner dashboardLanguageSelect, CheckBox keepAwake, CheckBox browserAuth, CheckBox startBoot, CheckBox debugWeb) {
         AppSettings.put(this, "ha_url", haUrl.getText().toString());
         String tokenValue = token.getText().toString();
         if (!tokenValue.trim().isEmpty()) AppSettings.put(this, "ha_token", tokenValue);
         AppSettings.put(this, "device_id", deviceId.getText().toString());
         AppSettings.put(this, "device_name", name.getText().toString());
         AppSettings.put(this, "default_url", dashboard.getText().toString());
+        String chosenLanguage = dashboardLanguageSelect != null && dashboardLanguageSelect.getSelectedItemPosition() == 1 ? "en" : "de";
+        appLanguage = chosenLanguage;
+        dashboardLanguage = chosenLanguage;
+        AppSettings.put(this, "app_language", chosenLanguage);
+        AppSettings.put(this, "dashboard_language", chosenLanguage);
+        AppSettings.putBoolean(this, "language_selected", true);
         AppSettings.putBoolean(this, "keep_awake", keepAwake.isChecked());
         AppSettings.putBoolean(this, "browser_external_auth", browserAuth.isChecked());
         AppSettings.putBoolean(this, "start_on_boot", startBoot.isChecked());
@@ -406,9 +498,9 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
             });
             setContentView(authView);
             authView.loadUrl(HaAuthClient.authorizeUrl(AppSettings.baseUrl(this)));
-            Toast.makeText(this, "Bitte bei Home Assistant anmelden", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, t("Bitte bei Home Assistant anmelden", "Please sign in to Home Assistant"), Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            Toast.makeText(this, "Login konnte nicht gestartet werden: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, t("Login konnte nicht gestartet werden: ", "Could not start login: ") + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -562,7 +654,7 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
         root.addView(webView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
         startupLoadingView = overlayText(16, Color.WHITE, 0x66000000, Gravity.CENTER);
-        startupLoadingView.setText("Kiosk wird geladen ...");
+        startupLoadingView.setText(t("Kiosk wird geladen ...", "Kiosk is loading ..."));
         startupLoadingView.setVisibility(View.VISIBLE);
         root.addView(startupLoadingView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
@@ -577,6 +669,8 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
         preferredAudioStream = AppSettings.get(this, "preferred_audio_stream", "music");
         forceMaxVolumeForSpeech = AppSettings.getBoolean(this, "force_max_volume_for_speech", true);
         requestAudioFocus = AppSettings.getBoolean(this, "request_audio_focus", true);
+        appLanguage = normalizeDashboardLanguage(AppSettings.get(this, "app_language", AppSettings.get(this, "dashboard_language", "de")));
+        dashboardLanguage = normalizeDashboardLanguage(AppSettings.get(this, "dashboard_language", appLanguage));
         currentPageZoomPercent = browserZoomPercent;
         setupWebView(webView);
         applyWebViewTransparency(webView);
@@ -656,11 +750,14 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
                     firstPageFinished = false;
                     prepareFirstPageRevealGate();
                 }
+                if (v == webView) handler.postDelayed(() -> applyDashboardLanguage(false), 120);
             }
 
             @Override public void onPageFinished(WebView v, String url) {
                 if (v == webView) {
                     firstPageFinished = true;
+                    applyDashboardLanguage(true);
+                    handler.postDelayed(() -> applyDashboardLanguage(false), 700);
                     scheduleHomeAssistantChromeRefresh();
                     scheduleDashboardZoomRefresh();
                     if (backgroundEnabled) {
@@ -1375,6 +1472,31 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
         handler.postDelayed(kioskChromeRunnable, 900);
         handler.postDelayed(kioskChromeRunnable, 1800);
         handler.postDelayed(kioskChromeRunnable, 3600);
+    }
+
+    private Map<String, String> browserLanguageHeaders() {
+        HashMap<String, String> headers = new HashMap<>();
+        String lang = normalizeDashboardLanguage(dashboardLanguage);
+        headers.put("Accept-Language", "en".equals(lang) ? "en-US,en;q=0.9,de;q=0.7" : "de-DE,de;q=0.9,en;q=0.7");
+        return headers;
+    }
+
+    private void applyDashboardLanguage(boolean reloadIfChanged) {
+        if (webView == null) return;
+        final String lang = normalizeDashboardLanguage(dashboardLanguage);
+        final String locale = "en".equals(lang) ? "en-US" : "de-DE";
+        final String reload = reloadIfChanged ? "true" : "false";
+        String js = "(function(){try{" +
+            "var lang=" + JSONObject.quote(lang) + ";var locale=" + JSONObject.quote(locale) + ";var shouldReload=" + reload + ";" +
+            "var changed=false;try{var old=localStorage.getItem('ha_android_kiosk_dashboard_language');changed=old!==lang;}catch(e){}" +
+            "try{var plain=['selectedLanguage','language','hassLanguage','hass_language','frontend_language','home-assistant-language','ha_language'];for(var i=0;i<plain.length;i++){localStorage.setItem(plain[i],lang);}}catch(e){}" +
+            "try{var regional=['locale','selectedLocale','hass_locale','frontend_locale'];for(var j=0;j<regional.length;j++){localStorage.setItem(regional[j],locale);}}catch(e){}" +
+            "try{localStorage.setItem('ha_android_kiosk_dashboard_language',lang);}catch(e){}" +
+            "try{document.documentElement.setAttribute('lang',lang);document.documentElement.setAttribute('data-kiosk-language',lang);}catch(e){}" +
+            "try{window.__haAndroidKioskLanguage=lang;window.dispatchEvent(new CustomEvent('ha-android-kiosk-language',{detail:{language:lang,locale:locale}}));}catch(e){}" +
+            "if(shouldReload&&changed&&!window.__haAndroidKioskLanguageReloaded){window.__haAndroidKioskLanguageReloaded=true;setTimeout(function(){try{location.reload();}catch(e){}},180);}" +
+            "}catch(e){console.warn('HA Android Kiosk language apply failed',e);}})();";
+        try { webView.evaluateJavascript(js, null); } catch (Exception ignored) {}
     }
 
     private void applyHomeAssistantHeaderVisibility() {
@@ -2199,6 +2321,17 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
             AppSettings.putInt(this, "visual_watchdog_seconds", visualWatchdogSeconds);
             scheduleVisualWatchdog();
         }
+        if (payload.has("dashboard_language") || payload.has("language") || payload.has("app_language")) {
+            String lang = payload.optString("dashboard_language", payload.optString("language", payload.optString("app_language", dashboardLanguage)));
+            dashboardLanguage = normalizeDashboardLanguage(lang);
+            AppSettings.put(this, "dashboard_language", dashboardLanguage);
+            if (payload.has("app_language")) {
+                appLanguage = normalizeDashboardLanguage(payload.optString("app_language", dashboardLanguage));
+                AppSettings.put(this, "app_language", appLanguage);
+            }
+            AppSettings.putBoolean(this, "language_selected", true);
+            applyDashboardLanguage(true);
+        }
         applyAudioSettingsFromPayload(payload);
         String userAgent = payload.optString("user_agent", "");
         AppSettings.put(this, "user_agent", userAgent);
@@ -2294,7 +2427,11 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
         prepareFirstPageRevealGate();
         currentPageZoomPercent = zoomPercent > 0 ? clampZoom(zoomPercent) : zoomForPath(pathOrUrl);
         currentUrl = maybeAddExternalAuth(resolveUrl(pathOrUrl));
-        webView.loadUrl(currentUrl);
+        try {
+            webView.loadUrl(currentUrl, browserLanguageHeaders());
+        } catch (Exception ignored) {
+            webView.loadUrl(currentUrl);
+        }
     }
 
     private void loadInitialPageIfNeeded() {
@@ -2899,7 +3036,7 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
             body.put("device_id", AppSettings.deviceId(this));
             body.put("app_id", "ha_android_kiosk");
             body.put("app_name", "HA Android Kiosk");
-            body.put("app_version", "1.9.12");
+            body.put("app_version", "1.9.13");
             body.put("device_name", AppSettings.get(this, "device_name", Build.MANUFACTURER + " " + Build.MODEL));
             body.put("manufacturer", Build.MANUFACTURER);
             body.put("model", Build.MODEL);
@@ -2928,12 +3065,14 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
             body.put("name", AppSettings.get(this, "device_name", Build.MANUFACTURER + " " + Build.MODEL));
             body.put("manufacturer", Build.MANUFACTURER);
             body.put("model", Build.MODEL);
-            body.put("app_version", "1.9.12");
+            body.put("app_version", "1.9.13");
             JSONArray caps = new JSONArray();
-            String[] values = {"webview", "set_page", "rotation", "touch_pause", "ticker", "banner", "toast", "alert", "clock", "weather", "camera_overlay", "brightness", "volume", "orientation", "vibrate", "screen_blank", "motion_detection", "camera_front", "camera_motion_detection", "light_sensor", "hide_ha_header", "media_player", "services_v3", "services_v4", "oauth_login", "mobile_app_registration", "tts", "background_slideshow", "background_first", "transparent_webview", "force_mobile_viewport", "self_sync", "cached_config", "visual_watchdog", "page_zoom_background_safe", "audio_boost", "memory_safe_background", "low_ram_zoom"};
+            String[] values = {"webview", "set_page", "rotation", "touch_pause", "ticker", "banner", "toast", "alert", "clock", "weather", "camera_overlay", "brightness", "volume", "orientation", "vibrate", "screen_blank", "motion_detection", "camera_front", "camera_motion_detection", "light_sensor", "hide_ha_header", "media_player", "services_v3", "services_v4", "oauth_login", "mobile_app_registration", "tts", "background_slideshow", "background_first", "transparent_webview", "force_mobile_viewport", "self_sync", "cached_config", "visual_watchdog", "page_zoom_background_safe", "audio_boost", "memory_safe_background", "low_ram_zoom", "dashboard_language"};
             for (String v : values) caps.put(v);
             body.put("capabilities", caps);
             body.put("current_url", currentUrl);
+            body.put("app_language", appLanguage);
+            body.put("dashboard_language", dashboardLanguage);
             restClient.postAsync("/api/ha_android_kiosk/register", body);
         } catch (Exception ignored) {}
     }
@@ -2972,6 +3111,9 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
             body.put("transparent_webview", transparentWebView);
             body.put("force_mobile_viewport", forceMobileViewport);
             body.put("hide_ha_header", hideHomeAssistantHeader);
+            body.put("app_language", appLanguage);
+            body.put("dashboard_language", dashboardLanguage);
+            body.put("dashboard_locale", dashboardLocale());
             body.put("browser_zoom_percent", browserZoomPercent);
             body.put("current_page_zoom_percent", effectiveDashboardZoom());
             body.put("settings_sync_seconds", settingsSyncIntervalSeconds);

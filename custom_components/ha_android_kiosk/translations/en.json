@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "HA Android Kiosk",
-        "description": "Install the standalone Android app on your tablet/phone, then open the Android Kiosk panel from the sidebar."
+        "description": "Install the standalone Android app on your tablet/phone, then open the Android Kiosk panel from the sidebar. Dashboard language, kiosk mode, rotation, background, audio and overlays are configured there."
       }
     },
     "abort": {

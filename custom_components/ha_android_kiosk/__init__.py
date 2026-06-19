@@ -141,7 +141,9 @@ GENERIC_SERVICE_SCHEMA = vol.Schema(
 # Public service names. Most are friendly wrappers around the Android command bus.
 SERVICE_NAMES: tuple[str, ...] = (
     "set_browser_config",
+    "set_dashboard_language",
     "open_url",
+    "set_pages",
     "send_ticker_message",
     "clear_ticker",
     "update_ticker_config",
@@ -259,7 +261,7 @@ async def _async_setup_once(hass: HomeAssistant) -> bool:
         webcomponent_name="ha-android-kiosk-panel",
         sidebar_title="Android Kiosk",
         sidebar_icon="mdi:tablet-dashboard",
-        module_url=f"{STATIC_URL}/ha-android-kiosk-panel.js",
+        module_url=f"{STATIC_URL}/ha-android-kiosk-panel.js?v=1.9.13",
         require_admin=True,
         config_panel_domain=DOMAIN,
     )
@@ -511,7 +513,9 @@ def _service_command(service: str, payload: dict[str, Any]) -> tuple[str, dict[s
 
     mapping = {
         "set_browser_config": "browser_config",
+        "set_dashboard_language": "browser_config",
         "open_url": "show_page",
+        "set_pages": "set_pages",
         "send_ticker_message": "ticker",
         "clear_ticker": "clear_ticker",
         "update_ticker_config": "ticker_config",
@@ -597,6 +601,11 @@ def _optimistic_state(hass: HomeAssistant, device_id: str, service: str, payload
         state["preferred_audio_stream"] = payload.get("audio_stream", state.get("preferred_audio_stream"))
         state["tts_volume_percent"] = payload.get("tts_volume", state.get("tts_volume_percent"))
         state["media_volume_percent"] = payload.get("media_volume", state.get("media_volume_percent"))
+    elif service == "set_dashboard_language":
+        lang = payload.get("dashboard_language", payload.get("language"))
+        if lang:
+            state["dashboard_language"] = lang
+            state["last_status"] = "language_requested"
     elif service == "sync_settings":
         state["last_status"] = "sync_requested"
     elif service == "recover_dashboard":
@@ -717,6 +726,8 @@ async def _apply_profile(hass: HomeAssistant, device_id: str) -> None:
             "force_mobile_viewport": browser.get("force_mobile_viewport", False),
             "reveal_ms": browser.get("reveal_ms", 250),
             "zoom_percent": browser.get("zoom_percent", 100),
+            "dashboard_language": browser.get("dashboard_language", browser.get("language", "de")),
+            "language": browser.get("dashboard_language", browser.get("language", "de")),
             "settings_sync_seconds": browser.get("settings_sync_seconds", 300),
             "visual_watchdog_seconds": browser.get("visual_watchdog_seconds", 45),
         }
@@ -895,10 +906,11 @@ class KioskRegisterView(HomeAssistantView):
                 "last_status": "registered",
             }
         )
-        existing.setdefault("browser", {"home_url": existing.get("current_url") or "/lovelace/0", "start_url": existing.get("current_url") or "/lovelace/0", "fullscreen": True, "keep_screen_on": True, "reload_seconds": 0, "user_agent": "", "webview_debug": False, "external_auth": True, "hide_header": False, "settings_sync_seconds": 300, "visual_watchdog_seconds": 45})
+        existing.setdefault("browser", {"home_url": existing.get("current_url") or "/lovelace/0", "start_url": existing.get("current_url") or "/lovelace/0", "fullscreen": True, "keep_screen_on": True, "reload_seconds": 0, "user_agent": "", "webview_debug": False, "external_auth": True, "hide_header": False, "dashboard_language": data.get("dashboard_language", data.get("app_language", "de")), "settings_sync_seconds": 300, "visual_watchdog_seconds": 45})
         existing.setdefault("browser", {})
         existing["browser"].setdefault("external_auth", True)
         existing["browser"].setdefault("hide_header", False)
+        existing["browser"].setdefault("dashboard_language", data.get("dashboard_language", data.get("app_language", "de")))
         existing["browser"].setdefault("settings_sync_seconds", 300)
         existing["browser"].setdefault("visual_watchdog_seconds", 45)
         existing.setdefault("duration", 15)

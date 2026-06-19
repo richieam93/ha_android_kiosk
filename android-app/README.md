@@ -1,24 +1,36 @@
-# HA Android Kiosk v17.12 / App 1.9.12
+# HA Android Kiosk v17.13 / App 1.9.13
 
-## Neu in v17.12
+## New in v17.13 / Neu in v17.13
 
-Diese Version repariert den Absturz aus v17.11 auf Android-6/RK3288-Tablets und behält Selbst-Sync, lokalen Cache, Seiten-Zoom und Audio-/TTS-Boost bei.
+- First-start language prompt: **Deutsch** or **English**.
+- Dashboard language can be stored locally and changed from Home Assistant.
+- Browser config accepts `dashboard_language`, `language` or `app_language`.
+- The WebView sends an `Accept-Language` header and writes Home Assistant language keys into WebView storage.
+- If the language changes, the dashboard reloads once so Home Assistant can apply the new language.
+- Keeps the v17.12 memory-safe background loader for older Android-6/RK3288 tablets.
 
-- RAM-sicherer Hintergrund-Loader: Bilder werden nicht mehr komplett in ein ByteArray geladen.
-- Maximal ein Hintergrund-Decode gleichzeitig, damit Standby/Watchdog keine parallelen Loader startet.
-- OutOfMemoryError wird abgefangen; bei einem zu grossen Bild bleibt die App offen und zeigt das Dashboard weiter.
-- Hintergrundbilder werden nur noch nativ hinter der WebView gezeichnet, nicht doppelt als CSS-Background in Home Assistant.
-- Transparente WebView nutzt keinen Software-Layer mehr, um den Java-Heap zu schonen.
-- Seiten-Zoom nutzt CSS-Zoom statt grossem Transform-Layer und ist dadurch speicherschonender.
-- Die bestehenden v17.11-Funktionen bleiben erhalten: Selbst-Sync, lokaler Notfall-Cache, Anzeige-Watchdog, Audio-/TTS-Boost.
+## Build
 
-## v17.3 Kiosk-Ladeverhalten
+```bash
+./gradlew assembleDebug
+```
 
-Die App erstellt beim Start zuerst eine native Android-Hintergrundebene. Wenn Home Assistant eine Hintergrundkonfiguration liefert, wird das erste Bild geladen und die WebView erst danach eingeblendet. Bei Netzwerkfehlern gibt es einen Timeout, damit der Browser trotzdem sichtbar wird.
+Windows:
 
-Zusätzliche Browser-Schalter aus der Integration:
+```bat
+gradlew.bat assembleDebug
+```
 
-- `wait_for_background`
-- `transparent_webview`
-- `force_mobile_viewport`
-- `reveal_ms`
+APK output:
+
+```text
+app/build/outputs/apk/debug/app-debug.apk
+```
+
+## Recommended settings for old tablets
+
+- Keep `wait_for_background` enabled.
+- Keep `transparent_webview` enabled.
+- Use dashboard zoom around `110–120 %` first.
+- Use reasonably sized background images.
+- Use `alarm` audio stream if TTS is too quiet.

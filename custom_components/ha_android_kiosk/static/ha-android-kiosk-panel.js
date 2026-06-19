@@ -61,6 +61,7 @@ class HaAndroidKioskPanel extends HTMLElement {
         force_mobile_viewport: false,
         reveal_ms: 250,
         zoom_percent: 100,
+        dashboard_language: "de",
         settings_sync_seconds: 300,
         visual_watchdog_seconds: 45,
       },
@@ -245,7 +246,7 @@ class HaAndroidKioskPanel extends HTMLElement {
         <div class="head">
           <div>
             <div class="title">Android Kiosk Admin</div>
-            <div class="sub">Verwalte Android-Kiosk-Geräte, Browser, Dashboard-Seiten, Rotation, Meldungen, Overlays, Medien und Berechtigungen. Modernisiertes Webinterface v17.12: Selbst-Sync, lokaler Notfall-Cache, RAM-sicherer Hintergrund-Loader, speicherschonender Seiten-Zoom, Audio-/TTS-Boost, Alben, Slideshow, Frontkamera-Bewegung und Kiosk-Leiste ohne HACS ausblenden.</div>
+            <div class="sub">Verwalte Android-Kiosk-Geräte, Browser, Dashboard-Seiten, Rotation, Meldungen, Overlays, Medien und Berechtigungen. Modernisiertes Webinterface v17.13: Sprache Deutsch/Englisch, Selbst-Sync, lokaler Notfall-Cache, RAM-sicherer Hintergrund-Loader, speicherschonender Seiten-Zoom, Audio-/TTS-Boost, Alben, Slideshow, Frontkamera-Bewegung und Kiosk-Leiste ohne HACS ausblenden.</div>
           </div>
           <div class="topActions">
             <button id="reload" class="secondary">Neu laden</button>
@@ -415,6 +416,7 @@ class HaAndroidKioskPanel extends HTMLElement {
         <div class="metricCard"><div class="metricLabel">Navigation</div><div class="metricValue">${b.hide_header || state.hide_ha_header ? "aus" : "sichtbar"}</div></div>
         <div class="metricCard"><div class="metricLabel">Viewport</div><div class="metricValue">${b.force_mobile_viewport ? "mobil" : "auto"}</div></div>
         <div class="metricCard"><div class="metricLabel">Größe</div><div class="metricValue">${this._escape(state.current_page_zoom_percent || b.zoom_percent || 100)}%</div></div>
+        <div class="metricCard"><div class="metricLabel">Sprache</div><div class="metricValue">${this._escape(state.dashboard_language || b.dashboard_language || "de")}</div></div>
         <div class="metricCard"><div class="metricLabel">Selbst-Sync</div><div class="metricValue">${this._escape(state.last_settings_sync_status || "bereit")}</div></div>
       </div>
     </div>
@@ -440,9 +442,10 @@ class HaAndroidKioskPanel extends HTMLElement {
         <label><input id="browser_force_mobile_viewport" type="checkbox" ${b.force_mobile_viewport ? "checked" : ""}> Tablet als mobile Ansicht rendern</label>
         <label><input id="browser_webview_debug" type="checkbox" ${b.webview_debug ? "checked" : ""}> WebView-Debugging aktivieren</label>
       </div>
-      <div class="grid3">
+      <div class="grid4">
         <div><label>Einblenddauer Dashboard ms</label><input id="browser_reveal_ms" type="number" min="0" max="2000" value="${this._escape(b.reveal_ms ?? 250)}"></div>
         <div><label>Standard-Seitengröße %</label><input id="browser_zoom_percent" type="number" min="50" max="200" value="${this._escape(b.zoom_percent ?? 100)}"></div>
+        <div><label>Dashboard-Sprache</label><select id="browser_dashboard_language"><option value="de" ${(b.dashboard_language || "de") === "de" ? "selected" : ""}>Deutsch</option><option value="en" ${(b.dashboard_language || "de") === "en" ? "selected" : ""}>English</option></select></div>
         <div><label>User-Agent optional</label><input id="browser_user_agent" value="${this._escape(b.user_agent || "")}" placeholder="Leer = Standard-WebView"></div>
       </div>
       <div class="grid3">
@@ -452,11 +455,13 @@ class HaAndroidKioskPanel extends HTMLElement {
       </div>
       <div class="helpBox"><strong>Selbst-Sync:</strong> Das Tablet lädt Rotation, Hintergrund und Browser-Einstellungen selbständig neu. 300 Sekunden ist empfohlen; 0 schaltet den zyklischen Abruf aus. Der lokale Cache startet auch, wenn Home Assistant nach langer Pause noch nicht sofort erreichbar ist.</div>
       <div class="helpBox"><strong>Größe/Zoom:</strong> 100% ist normal. 115–130% macht Karten und Widgets größer. In der Seitenliste kannst du für jede Seite einen eigenen Wert setzen; leer bedeutet: Standard-Seitengröße verwenden. Ab dieser Version bleibt der native Hintergrund auch bei 120%+ sichtbar.</div>
+      <div class="helpBox"><strong>Dashboard-Sprache:</strong> Deutsch oder Englisch wird an die Android-App gesendet. Die App setzt Accept-Language, schreibt die Sprache in den WebView-Speicher und lädt Home Assistant bei einer Änderung einmal neu.</div>
       <div class="helpBox"><strong>Für das SuitePad/RK3288 empfohlen:</strong> Navigation ausblenden nutzt einen eingebauten Kiosk-Injector ohne HACS. Mobile Viewport nur einschalten, wenn Home Assistant auf dem Tablet weiterhin links eine Sidebar erzwingt.</div>
       <div class="actions">
         <button id="saveBrowser">Speichern</button>
         <button id="applyBrowser" class="ghost">Browser-Konfiguration senden</button>
         <button id="openBrowserUrl" class="secondary">URL öffnen</button>
+        <button id="applyLanguage" class="secondary">Sprache anwenden</button>
         <button id="reloadPage" class="secondary">Seite neu laden</button>
         <button id="syncSettingsNow" class="secondary">Einstellungen vom Tablet abrufen lassen</button>
         <button id="recoverDashboard" class="secondary">Anzeige reparieren</button>
@@ -718,6 +723,7 @@ class HaAndroidKioskPanel extends HTMLElement {
 
     on("saveBrowser", () => this._save());
     on("applyBrowser", async () => { if (await this._save(false)) await this._command("browser_config", this._browserPayload()); });
+    on("applyLanguage", async () => { if (await this._save(false)) await this._command("browser_config", { dashboard_language: this._value("browser_dashboard_language") || "de", language: this._value("browser_dashboard_language") || "de" }); });
     on("applyKioskPreset", () => this._applyRecommendedKioskPreset());
     on("openBrowserUrl", () => this._command("show_page", { url: this._value("browser_open_url") }));
     on("reloadPage", () => this._command("reload_page", {}));
@@ -920,6 +926,7 @@ class HaAndroidKioskPanel extends HTMLElement {
     if (this._exists("browser_force_mobile_viewport")) out.force_mobile_viewport = this._checked("browser_force_mobile_viewport");
     if (this._exists("browser_reveal_ms")) out.reveal_ms = Number(this._value("browser_reveal_ms") || 250);
     if (this._exists("browser_zoom_percent")) out.zoom_percent = this._clampZoom(Number(this._value("browser_zoom_percent") || 100));
+    if (this._exists("browser_dashboard_language")) out.dashboard_language = this._value("browser_dashboard_language") || "de";
     if (this._exists("browser_settings_sync_seconds")) out.settings_sync_seconds = Number(this._value("browser_settings_sync_seconds") || 0);
     if (this._exists("browser_visual_watchdog_seconds")) out.visual_watchdog_seconds = Number(this._value("browser_visual_watchdog_seconds") || 0);
     if (this._exists("browser_webview_debug")) out.webview_debug = this._checked("browser_webview_debug");
@@ -1237,6 +1244,7 @@ class HaAndroidKioskPanel extends HTMLElement {
     setValue("browser_external_auth", "true");
     setValue("browser_reveal_ms", "250");
     setValue("browser_zoom_percent", "120");
+    setValue("browser_dashboard_language", this._value("browser_dashboard_language", "de") || "de");
     setValue("browser_settings_sync_seconds", "300");
     setValue("browser_visual_watchdog_seconds", "45");
     this._status = "Empfohlenes Kiosk-Profil gesetzt. Bitte speichern oder direkt senden.";
@@ -1279,6 +1287,8 @@ class HaAndroidKioskPanel extends HTMLElement {
       force_mobile_viewport: b.force_mobile_viewport,
       reveal_ms: b.reveal_ms,
       zoom_percent: b.zoom_percent,
+      dashboard_language: b.dashboard_language || "de",
+      language: b.dashboard_language || "de",
       settings_sync_seconds: b.settings_sync_seconds,
       visual_watchdog_seconds: b.visual_watchdog_seconds,
     };
