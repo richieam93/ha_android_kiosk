@@ -31,7 +31,8 @@ class HaAndroidKioskPanel extends HTMLElement {
       ]);
       this._config = config || { devices: {} };
       this._config.devices = this._config.devices || {};
-      this._config.admin_language = this._normalizeLanguage(this._config.admin_language || this._localAdminLanguage() || "de");
+      const storedAdminLanguage = this._localAdminLanguage();
+      this._config.admin_language = this._normalizeLanguage(storedAdminLanguage || this._config.admin_language || "de");
       this._uiLanguage = this._config.admin_language;
       this._states = (devices && devices.states) || {};
       this._backgroundFiles = (backgrounds && backgrounds.files) || [];
@@ -285,7 +286,7 @@ class HaAndroidKioskPanel extends HTMLElement {
         <div class="head">
           <div>
             <div class="title">Android Kiosk Admin</div>
-            <div class="sub">Konfiguriere Android-Kiosk-Screens, Browser, Rotation und Hintergrund-Alben. Webinterface v17.16: Bedienfunktionen wie Meldungen, Overlays, Module, Gerät und Medien sind jetzt als Automation-&-Testbereich mit kopierfertigen YAML-Beispielen organisiert, damit der echte Betrieb sauber über Home-Assistant-Automationen läuft.</div>
+            <div class="sub">Konfiguriere Android-Kiosk-Screens, Browser, Rotation und Hintergrund-Alben. Webinterface v17.17: Bedienfunktionen wie Meldungen, Overlays, Module, Gerät und Medien sind jetzt als Automation-&-Testbereich mit kopierfertigen YAML-Beispielen organisiert, damit der echte Betrieb sauber über Home-Assistant-Automationen läuft.</div>
           </div>
           <div class="topActions">
             <div class="languageBox">
@@ -390,59 +391,61 @@ class HaAndroidKioskPanel extends HTMLElement {
 
   _pagesTab(d, state) {
     const pages = d.pages || [];
+    const currentUrl = this._escape(this._toRelative(state.current_url || d.current_url || ""));
     return `<div class="section">
-      <h2>Dashboard-Seiten</h2>
-      <div class="hint">Füge Seiten per Formular hinzu. URL kann relativ sein, z. B. <code>/lovelace/0</code>. Pro Seite kannst du optional eine Größe in Prozent setzen, z. B. 120 für größere Widgets.</div>
+      <h2>${this._tr("Dashboard-Seiten")}</h2>
+      <div class="hint">${this._tr("Füge Seiten per Formular hinzu. URL kann relativ sein, z. B. /lovelace/0. Pro Seite kannst du optional eine Größe in Prozent setzen, z. B. 120 für größere Widgets.")}</div>
       <div class="quick">
         <button class="secondary quickPage" data-url="/lovelace/0" data-name="Home">+ /lovelace/0</button>
         <button class="secondary quickPage" data-url="/dashboard-home/0" data-name="Dashboard Home">+ dashboard-home</button>
-        <button class="secondary quickPage" data-url="/energy" data-name="Energie">+ Energie</button>
-        <button class="secondary quickPage" data-url="${this._escape(this._toRelative(state.current_url || d.current_url || ""))}" data-name="Aktuelle Seite">+ aktuelle URL</button>
+        <button class="secondary quickPage" data-url="/energy" data-name="${this._tr("Energie")}">+ ${this._tr("Energie")}</button>
+        <button class="secondary quickPage" data-url="${currentUrl}" data-name="${this._tr("Aktuelle Seite")}">+ ${this._tr("aktuelle URL")}</button>
       </div>
       <div id="pagesList">${pages.map((p, i) => this._pageRow(p, i)).join("")}</div>
       <div class="actions">
-        <button id="addPage">Seite hinzufügen</button>
-        <button id="addManyPages" class="secondary">Mehrere aus Liste einfügen</button>
-        <button id="savePages">Speichern</button>
-        <button id="sendPages" class="ghost">Rotation ans Gerät senden</button>
+        <button id="addPage">${this._tr("Seite hinzufügen")}</button>
+        <button id="addManyPages" class="secondary">${this._tr("Mehrere aus Liste einfügen")}</button>
+        <button id="savePages">${this._tr("Speichern")}</button>
+        <button id="sendPages" class="ghost">${this._tr("Rotation ans Gerät senden")}</button>
       </div>
     </div>
     <div class="section">
-      <h2>Rotation</h2>
+      <h2>${this._tr("Rotation")}</h2>
       <div class="grid4">
-        <div><label>Standard-Dauer pro Seite</label><input id="duration" type="number" min="1" value="${this._escape(d.duration ?? 15)}"></div>
-        <div><label>Automatisch rotieren</label><select id="auto_rotate"><option value="true" ${d.auto_rotate ? "selected" : ""}>Ja</option><option value="false" ${!d.auto_rotate ? "selected" : ""}>Nein</option></select></div>
-        <div><label>Bei Touch pausieren</label><select id="pause_on_touch"><option value="true" ${d.pause_on_touch ? "selected" : ""}>Ja</option><option value="false" ${!d.pause_on_touch ? "selected" : ""}>Nein</option></select></div>
-        <div><label>Touch-Pause Sekunden</label><input id="touch_pause" type="number" min="0" value="${this._escape(d.touch_pause ?? 30)}"></div>
+        <div><label>${this._tr("Standard-Dauer pro Seite")}</label><input id="duration" type="number" min="1" value="${this._escape(d.duration ?? 15)}"></div>
+        <div><label>${this._tr("Automatisch rotieren")}</label><select id="auto_rotate"><option value="true" ${d.auto_rotate ? "selected" : ""}>${this._tr("Ja")}</option><option value="false" ${!d.auto_rotate ? "selected" : ""}>${this._tr("Nein")}</option></select></div>
+        <div><label>${this._tr("Bei Touch pausieren")}</label><select id="pause_on_touch"><option value="true" ${d.pause_on_touch ? "selected" : ""}>${this._tr("Ja")}</option><option value="false" ${!d.pause_on_touch ? "selected" : ""}>${this._tr("Nein")}</option></select></div>
+        <div><label>${this._tr("Touch-Pause Sekunden")}</label><input id="touch_pause" type="number" min="0" value="${this._escape(d.touch_pause ?? 30)}"></div>
       </div>
       <div class="actions">
-        <button id="prevPage" class="secondary">Vorherige Seite</button>
-        <button id="nextPage" class="secondary">Nächste Seite</button>
-        <button id="pauseRotation" class="secondary">Rotation pausieren</button>
-        <button id="resumeRotation" class="secondary">Rotation fortsetzen</button>
+        <button id="prevPage" class="secondary">${this._tr("Vorherige Seite")}</button>
+        <button id="nextPage" class="secondary">${this._tr("Nächste Seite")}</button>
+        <button id="pauseRotation" class="secondary">${this._tr("Rotation pausieren")}</button>
+        <button id="resumeRotation" class="secondary">${this._tr("Rotation fortsetzen")}</button>
       </div>
     </div>`;
   }
 
   _pageRow(p, index) {
     const url = typeof p === "string" ? p : (p.url || p.path || "");
-    const name = typeof p === "string" ? `Seite ${index + 1}` : (p.name || p.title || `Seite ${index + 1}`);
+    const fallbackName = this._tr("Seite") + ` ${index + 1}`;
+    const name = typeof p === "string" ? fallbackName : (p.name || p.title || fallbackName);
     const duration = typeof p === "string" ? "" : (p.duration || "");
     const zoom = typeof p === "string" ? "" : (p.zoom_percent || p.zoom || p.scale_percent || "");
     return `<div class="pageItem" data-page-index="${index}">
-      <div class="pageHeader"><strong>Seite ${index + 1}</strong><span class="badge">${this._escape(url)}</span></div>
+      <div class="pageHeader"><strong>${this._tr("Seite")} ${index + 1}</strong><span class="badge">${this._escape(url)}</span></div>
       <div class="pageGrid">
-        <div><label>Name</label><input class="pageName" value="${this._escape(name)}"></div>
-        <div><label>URL / Pfad</label><input class="pageUrl" value="${this._escape(url)}" placeholder="/lovelace/0"></div>
-        <div><label>Dauer</label><input class="pageDuration" type="number" min="1" value="${this._escape(duration)}" placeholder="Standard"></div>
-        <div><label>Größe %</label><input class="pageZoom" type="number" min="50" max="200" value="${this._escape(zoom)}" placeholder="Global"></div>
+        <div><label>${this._tr("Name")}</label><input class="pageName" value="${this._escape(name)}"></div>
+        <div><label>${this._tr("URL / Pfad")}</label><input class="pageUrl" value="${this._escape(url)}" placeholder="/lovelace/0"></div>
+        <div><label>${this._tr("Dauer")}</label><input class="pageDuration" type="number" min="1" value="${this._escape(duration)}" placeholder="${this._tr("Standard")}"></div>
+        <div><label>${this._tr("Größe %")}</label><input class="pageZoom" type="number" min="50" max="200" value="${this._escape(zoom)}" placeholder="${this._tr("Global")}"></div>
       </div>
       <div class="miniActions" style="margin-top:10px">
         <button class="small secondary movePage" data-dir="-1">↑</button>
         <button class="small secondary movePage" data-dir="1">↓</button>
-        <button class="small secondary duplicatePage">Duplizieren</button>
-        <button class="small ghost testPage">Öffnen</button>
-        <button class="small warn deletePage">Löschen</button>
+        <button class="small secondary duplicatePage">${this._tr("Duplizieren")}</button>
+        <button class="small ghost testPage">${this._tr("Öffnen")}</button>
+        <button class="small warn deletePage">${this._tr("Löschen")}</button>
       </div>
     </div>`;
   }
@@ -1968,7 +1971,7 @@ action:
 }
 HaAndroidKioskPanel.I18N_EN = {
   'Android Kiosk Admin': 'Android Kiosk Admin',
-  'Konfiguriere Android-Kiosk-Screens, Browser, Rotation und Hintergrund-Alben. Webinterface v17.16: Bedienfunktionen wie Meldungen, Overlays, Module, Gerät und Medien sind jetzt als Automation-&-Testbereich mit kopierfertigen YAML-Beispielen organisiert, damit der echte Betrieb sauber über Home-Assistant-Automationen läuft.': 'Configure Android kiosk screens, browser, rotation and background albums. Web interface v17.16: control functions such as messages, overlays, modules, device actions and media are now organized as an Automation & Tests area with copy-ready YAML examples, so real operation runs cleanly through Home Assistant automations.',
+  'Konfiguriere Android-Kiosk-Screens, Browser, Rotation und Hintergrund-Alben. Webinterface v17.17: Bedienfunktionen wie Meldungen, Overlays, Module, Gerät und Medien sind jetzt als Automation-&-Testbereich mit kopierfertigen YAML-Beispielen organisiert, damit der echte Betrieb sauber über Home-Assistant-Automationen läuft.': 'Configure Android kiosk screens, browser, rotation and background albums. Web interface v17.17: control functions such as messages, overlays, modules, device actions and media are now organized as an Automation & Tests area with copy-ready YAML examples, so real operation runs cleanly through Home Assistant automations.',
   'Admin-Sprache': 'Admin language',
   'Deutsch': 'German',
   'English': 'English',
@@ -2030,6 +2033,20 @@ HaAndroidKioskPanel.I18N_EN = {
   'Geräte-Testbefehle': 'Device test commands',
   'Kopierfertige YAML-Automationen': 'Copy-ready YAML automations',
   'Dashboard-Seiten': 'Dashboard pages',
+  'Füge Seiten per Formular hinzu. URL kann relativ sein, z. B. /lovelace/0. Pro Seite kannst du optional eine Größe in Prozent setzen, z. B. 120 für größere Widgets.': 'Add pages with the form. The URL can be relative, for example /lovelace/0. You can optionally set a size percentage per page, for example 120 for larger widgets.',
+  'Energie': 'Energy',
+  'Aktuelle Seite': 'Current page',
+  'aktuelle URL': 'current URL',
+  'Seite': 'Page',
+  'Name': 'Name',
+  'URL / Pfad': 'URL / path',
+  'Dauer': 'Duration',
+  'Standard': 'Default',
+  'Größe %': 'Size %',
+  'Global': 'Global',
+  'Duplizieren': 'Duplicate',
+  'Öffnen': 'Open',
+  'Löschen': 'Delete',
   'Füge Seiten per Formular hinzu. URL kann relativ sein, z. B.': 'Add pages with the form. The URL can be relative, for example',
   '. Pro Seite kannst du optional eine Größe in Prozent setzen, z. B. 120 für größere Widgets.': '. You can optionally set a size percentage per page, for example 120 for larger widgets.',
   '+ Energie': '+ Energy',

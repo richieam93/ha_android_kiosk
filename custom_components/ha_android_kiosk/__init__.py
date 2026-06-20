@@ -275,7 +275,7 @@ async def _async_setup_once(hass: HomeAssistant) -> bool:
         webcomponent_name="ha-android-kiosk-panel",
         sidebar_title="Android Kiosk",
         sidebar_icon="mdi:tablet-dashboard",
-        module_url=f"{STATIC_URL}/ha-android-kiosk-panel.js?v=1.9.16",
+        module_url=f"{STATIC_URL}/ha-android-kiosk-panel.js?v=1.9.17",
         require_admin=True,
         config_panel_domain=DOMAIN,
     )
