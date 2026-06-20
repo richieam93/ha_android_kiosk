@@ -286,7 +286,7 @@ class HaAndroidKioskPanel extends HTMLElement {
         <div class="head">
           <div>
             <div class="title">Android Kiosk Admin</div>
-            <div class="sub">Konfiguriere Android-Kiosk-Screens, Browser, Rotation und Hintergrund-Alben. Webinterface v17.17: Bedienfunktionen wie Meldungen, Overlays, Module, Gerät und Medien sind jetzt als Automation-&-Testbereich mit kopierfertigen YAML-Beispielen organisiert, damit der echte Betrieb sauber über Home-Assistant-Automationen läuft.</div>
+            <div class="sub">Konfiguriere Android-Kiosk-Screens, Browser, Rotation und Hintergrund-Alben. Webinterface v17.18: Bedienfunktionen wie Meldungen, Overlays, Module, Gerät und Medien sind jetzt als Automation-&-Testbereich mit kopierfertigen YAML-Beispielen organisiert, damit der echte Betrieb sauber über Home-Assistant-Automationen läuft.</div>
           </div>
           <div class="topActions">
             <div class="languageBox">
@@ -1903,6 +1903,7 @@ action:
       this._lastError = String(err);
     }
     this._render();
+    setTimeout(() => window.location.reload(), 150);
   }
 
   _tr(text) {
@@ -1921,6 +1922,10 @@ action:
           const translated = this._translateText(trimmed);
           if (translated !== trimmed) node.nodeValue = original.replace(trimmed, translated);
         }
+        return;
+      }
+      if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE || node.nodeType === Node.DOCUMENT_NODE) {
+        Array.from(node.childNodes).forEach(translateNode);
         return;
       }
       if (node.nodeType !== Node.ELEMENT_NODE) return;
@@ -1970,8 +1975,24 @@ action:
   }
 }
 HaAndroidKioskPanel.I18N_EN = {
+
+  'Admin interface switched to English.': 'Admin interface switched to English.',
+  'Admin-Oberfläche auf Deutsch umgestellt.': 'Admin interface switched to German.',
+  'Profil anwenden': 'Apply profile',
+  'Gerät hinzufügen': 'Add device',
+  'Vollständig löschen': 'Delete completely',
+  'Testgeräte bereinigen': 'Clean test devices',
+  'Gerätename': 'Device name',
+  'Geräte-ID': 'Device ID',
+  'Die Geräte-ID muss zur ID in der Android-App passen. Name ist frei wählbar.': 'The device ID must match the ID shown in the Android app. The name can be chosen freely.',
+  'Webbrowser & Kiosk-Modus': 'Web browser & kiosk mode',
+  'Hintergrund-Alben': 'Background albums',
+  'Bilder ins Album hochladen': 'Upload images to album',
+  'Automation & Tests': 'Automation & tests',
+  'Berechtigungen für Home Assistant': 'Permissions for Home Assistant',
+  'Alte Testgeräte bereinigen': 'Clean old test devices',
   'Android Kiosk Admin': 'Android Kiosk Admin',
-  'Konfiguriere Android-Kiosk-Screens, Browser, Rotation und Hintergrund-Alben. Webinterface v17.17: Bedienfunktionen wie Meldungen, Overlays, Module, Gerät und Medien sind jetzt als Automation-&-Testbereich mit kopierfertigen YAML-Beispielen organisiert, damit der echte Betrieb sauber über Home-Assistant-Automationen läuft.': 'Configure Android kiosk screens, browser, rotation and background albums. Web interface v17.17: control functions such as messages, overlays, modules, device actions and media are now organized as an Automation & Tests area with copy-ready YAML examples, so real operation runs cleanly through Home Assistant automations.',
+  'Konfiguriere Android-Kiosk-Screens, Browser, Rotation und Hintergrund-Alben. Webinterface v17.18: Bedienfunktionen wie Meldungen, Overlays, Module, Gerät und Medien sind jetzt als Automation-&-Testbereich mit kopierfertigen YAML-Beispielen organisiert, damit der echte Betrieb sauber über Home-Assistant-Automationen läuft.': 'Configure Android kiosk screens, browser, rotation and background albums. Web interface v17.18: control functions such as messages, overlays, modules, device actions and media are now organized as an Automation & Tests area with copy-ready YAML examples, so real operation runs cleanly through Home Assistant automations.',
   'Admin-Sprache': 'Admin language',
   'Deutsch': 'German',
   'English': 'English',

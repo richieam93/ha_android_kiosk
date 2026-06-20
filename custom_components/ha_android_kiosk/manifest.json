@@ -6,6 +6,6 @@
   "documentation": "https://github.com/richieam93/ha_android_kiosk",
   "iot_class": "local_push",
   "requirements": [],
-  "version": "1.9.17",
+  "version": "1.9.18",
   "issue_tracker": "https://github.com/richieam93/ha_android_kiosk/issues"
 }
