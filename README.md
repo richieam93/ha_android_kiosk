@@ -1,494 +1,1224 @@
 # HA Android Kiosk
 
-**HA Android Kiosk** is a Home Assistant custom integration with a dedicated Android kiosk browser app for wall tablets, dashboards, old Android devices and always-on information screens.
+**HA Android Kiosk** is a Home Assistant custom integration with a dedicated Android kiosk browser app for wall tablets, dashboards, information screens and older Android devices.
 
-**HA Android Kiosk** ist eine Home-Assistant-Custom-Integration mit eigener Android-Kiosk-Browser-App für Wandtablets, Dashboards, ältere Android-Geräte und dauerhaft laufende Info-Displays.
+**HA Android Kiosk** ist eine Home-Assistant-Custom-Integration mit eigener Android-Kiosk-Browser-App für Wandtablets, Dashboard-Displays, Info-Bildschirme und ältere Android-Geräte.
 
-> Current version / Aktuelle Version: **Integration 1.9.16 / Android App 1.9.16**  
-> Optimized for older devices such as **Android 6 / RK3288 / WebView 96**, while still working on newer Android versions.
-
-The Home Assistant integration is installed through **HACS as a custom integration repository**. The Android APK is built or uploaded separately, for example as a GitHub release asset.
-
-Die Home-Assistant-Integration wird über **HACS als Custom Integration Repository** installiert. Die Android-APK wird separat gebaut oder von dir als GitHub-Release-Datei hochgeladen.
+> Current version / Aktuelle Version: **Integration 1.9.18 / Android App 1.9.18**  
+> Installation: **HACS custom repository + Android APK**
 
 ---
 
 ## Deutsch
 
-### Was ist dieses Projekt?
+### 1. Zweck dieses Projekts
 
-Dieses Projekt verbindet Home Assistant mit einer eigenen Android-App. Die Android-App öffnet dein Home-Assistant-Dashboard in einer WebView und macht daraus einen stabilen Kiosk-Browser für Tablets. Die Integration in Home Assistant verwaltet Geräte, Seiten, Rotation, Hintergründe, Medien, Sprache, Berechtigungen und Kiosk-Einstellungen über ein eigenes Sidebar-Webinterface.
+HA Android Kiosk macht aus einem Android-Tablet ein Home-Assistant-Wanddisplay.
 
-Das Ziel ist ein Wandtablet, das nach Neustart, Standby oder Netzwerkunterbruch selbständig wieder in den richtigen Zustand zurückfindet: Hintergrund laden, Dashboard anzeigen, Navigation ausblenden, Seiten rotieren, TTS abspielen und regelmäßig die gespeicherten Einstellungen aus Home Assistant abrufen.
+Die Home-Assistant-Integration stellt die Verwaltung, Services, Automationsbefehle und das Sidebar-Panel bereit. Die Android-App läuft auf dem Tablet, öffnet Home Assistant in einer WebView und zeigt die konfigurierten Dashboard-Seiten im Kiosk-Modus an.
 
-### Hauptfunktionen
+Das Webinterface dient zur Einrichtung, zum Testen und zum Kopieren von YAML-Beispielen. Der normale Betrieb soll anschließend über Home-Assistant-Automationen laufen.
 
-- **Kiosk-Browser für Home Assistant**  
-  Zeigt Lovelace-/Dashboard-Seiten im Android-WebView an und kann direkt einzelne Home-Assistant-Pfade öffnen.
+Typischer Ablauf:
 
-- **Kiosk-Modus ohne zusätzliche HACS-Erweiterung**  
-  Die App kann Home-Assistant-Header, Sidebar, Menü und obere Navigation direkt im WebView ausblenden. Eine separate `kiosk-mode`-HACS-Erweiterung ist dafür nicht nötig.
+1. Integration über HACS installieren.
+2. Android-APK auf dem Tablet installieren.
+3. App starten und in Home Assistant anmelden.
+4. Im Sidebar-Panel eigene Dashboard-Seiten für das Tablet hinterlegen.
+5. Browser, Kiosk-Modus, Hintergrund und Rotation konfigurieren.
+6. YAML-Automationen kopieren und eigene Sensoren/Entities einsetzen.
+7. Tablet automatisch über Automationen steuern lassen.
 
-- **Admin-Webinterface Deutsch/Englisch**  
-  Das komplette Sidebar-Panel **Android Kiosk Admin** kann oben rechts zwischen Deutsch und Englisch umgeschaltet werden. Die Auswahl wird gespeichert und gilt für die gesamte Verwaltungsoberfläche.
+---
 
-- **Dashboard-Sprache Deutsch/Englisch**  
-  Pro Gerät kann die Dashboard-Sprache auf `de` oder `en` gesetzt werden. Die Android-App fragt beim ersten Start nach **Deutsch** oder **English**. Die gewählte Sprache wird lokal gespeichert und kann später im Android-Kiosk-Panel oder per Service geändert werden.
+### 2. Voraussetzungen
 
-- **Seitenrotation**  
-  Mehrere Dashboard-Seiten können mit eigener Dauer automatisch rotiert werden. Touch-Pause verhindert, dass eine Seite sofort weiterwechselt, während jemand das Tablet bedient.
+Benötigt wird:
 
-- **Manuelle Seitengröße / Zoom**  
-  Du kannst eine globale Dashboard-Größe definieren, zum Beispiel `120 %`, und zusätzlich pro Seite eine eigene Größe setzen.
+- Home Assistant mit HACS.
+- Ein Android-Gerät oder Tablet.
+- Die Android-APK aus dem GitHub-Release oder ein lokal gebautes APK.
+- Netzwerkzugriff vom Tablet auf Home Assistant.
+- Ein Home-Assistant-Benutzerkonto für die Anmeldung in der Android-App.
 
-- **Native Hintergrund-Slideshow**  
-  Hinter der WebView läuft eine native Android-Hintergrundebene. Dadurch bleibt der Hintergrund auch bei transparentem WebView und größeren Dashboard-Zoomwerten sichtbar.
+Empfohlen wird ein eigenes Home-Assistant-Benutzerkonto für das Wandtablet. Dieses Konto kann ein eigenes Dashboard und eigene Sichtbarkeiten erhalten.
 
-- **Hintergrund zuerst laden**  
-  Optional wird zuerst der Hintergrund geladen und erst danach das Dashboard eingeblendet. Dadurch wirkt der Start sauberer und weniger flackernd.
+---
 
-- **RAM-sicherer Hintergrund-Loader**  
-  Der Hintergrund wird speicherschonend geladen. Das ist wichtig für ältere Geräte mit wenig Heap-Speicher, zum Beispiel Android-6-/RK3288-Tablets.
+### 3. Installation über HACS
 
-- **Selbst-Sync vom Tablet**  
-  Das Tablet kann Browser-, Hintergrund-, Rotation- und Geräteeinstellungen selbständig von Home Assistant abrufen. Das hilft, wenn das Gerät längere Zeit ausgeschaltet oder offline war.
+1. Home Assistant öffnen.
+2. **HACS** öffnen.
+3. Rechts oben das Menü öffnen.
+4. **Custom repositories** wählen.
+5. Die GitHub-Repository-URL einfügen.
+6. Kategorie **Integration** auswählen.
+7. Repository hinzufügen.
+8. In HACS nach **HA Android Kiosk** suchen.
+9. Integration installieren.
+10. Home Assistant neu starten.
 
-- **Lokaler Cache**  
-  Die zuletzt bekannten Einstellungen werden in der Android-App zwischengespeichert. Wenn Home Assistant beim Start noch nicht erreichbar ist, kann das Tablet trotzdem mit den letzten Einstellungen starten.
+Nach dem Neustart erscheint im Sidebar-Menü das Panel **Android Kiosk**.
 
-- **Anzeige-Watchdog / Recovery**  
-  Die App kann regelmäßig Kiosk-Modus, Hintergrund, Transparenz und Zoom erneut anwenden und bei Darstellungsproblemen das Dashboard wieder sichtbar machen.
+---
 
-- **Audio, TTS und Lautsprecher-Boost**  
-  TTS-Durchsagen, Sounds und Medien können über Home Assistant an das Tablet gesendet werden. Die App kann Android-Audiokanäle wie `music` oder `alarm` verwenden, Audio-Fokus anfordern und Lautstärke auf Maximum setzen.
+### 4. Android-APK installieren
 
-- **Erweiterte Overlays**  
-  Ticker, Toasts, Banner, Vollbild-/Panel-Alerts, Uhr, Wetter und Kamera-Overlay können auf dem Tablet angezeigt werden. Ticker, Banner und Alerts unterstützen Farben, Textgrößen, Positionen, Dauer, Wake-Screen, TTS, Sound und Vibration. Das Wetter-Overlay kann Daten direkt aus einer `weather.*`-Entity lesen. Das Kamera-Overlay unterstützt Position, Größe, Dauer und Snapshot-/Proxy-Refresh.
+Die APK wird separat installiert. Sie gehört nicht direkt zur HACS-Installation.
 
-- **Status-Overlay aus Sensoren**  
-  Mit `show_status_overlay` kannst du eine Liste von Home-Assistant-Entities direkt als übersichtliches Display-Overlay anzeigen, zum Beispiel Temperaturen, Fenster, Türen, Waschmaschine, PV-Leistung oder Strompreis.
+#### Variante A: APK über Datei installieren
 
-- **Overlay-Sequenzen**  
-  Mit `show_overlay_sequence` kannst du mehrere Anzeigen nacheinander abspielen: Banner, Wetter, Status, Kamera und Alerts. Das ist praktisch für Morgenroutinen, Türklingel, Nachtmodus oder Info-Durchläufe.
+1. APK aus dem GitHub-Release herunterladen.
+2. APK auf das Tablet kopieren.
+3. Auf dem Tablet die APK öffnen.
+4. Installation aus unbekannten Quellen erlauben.
+5. App installieren.
+6. App starten.
 
-- **Geräte-Entities in Home Assistant**  
-  Pro Tablet entstehen Home-Assistant-Entities wie Sensoren, Switches, Numbers und Media Player, damit du Automationen bauen kannst.
+#### Variante B: APK per ADB installieren
 
-- **Berechtigungen und Gerätefunktionen**  
-  Unterstützt werden unter anderem Display wach halten, Helligkeit, Lautstärke, Orientierung, Vibration, Frontkamera, Kamera-Bewegungserkennung und Lichtsensor, abhängig vom Gerät und den Android-Berechtigungen.
-
-
-### Webinterface ab Version 1.9.16: Einrichtung statt Dauer-Bedienung
-
-Das Sidebar-Panel ist jetzt klarer getrennt:
-
-- **Screens**: Dashboard-Seiten, Reihenfolge, Dauer und Seitengröße hinterlegen.
-- **Browser**: Kiosk-Modus, Sprache, Zoom, Selbst-Sync und Ladeverhalten konfigurieren.
-- **Hintergrund**: Alben, Uploads und Slideshow verwalten.
-- **Automation & Tests**: Ticker, Banner, Alerts, Wetter, Kamera, Status-Overlay, TTS, Sound und Gerätebefehle nur kurz testen und danach eine passende YAML-Automation kopieren.
-- **Berechtigungen**: festlegen, welche Funktionen Home Assistant an ein Gerät senden darf.
-- **Bereinigen**: alte Testgeräte und Registry-Einträge entfernen.
-
-Die früheren Tabs **Meldungen**, **Module**, **Gerät** und **Medien/TTS** sind keine eigenen Bedienseiten mehr. Diese Funktionen sind jetzt im Tab **Automation & Tests** gebündelt, weil sie im echten Betrieb über Automationen gesteuert werden sollen. Dadurch bleibt das Webinterface übersichtlicher und das Tablet läuft selbständig.
-
-Weitere Details findest du in [`docs/AUTOMATION_LAB_DE.md`](docs/AUTOMATION_LAB_DE.md).
-
-
-### Erste Einrichtung
-
-1. Installiere die HACS-Integration und starte Home Assistant neu.
-2. Installiere die Android-APK auf dem Tablet.
-3. Öffne die App.
-4. Wähle beim ersten Start **Deutsch** oder **English**.
-5. Trage die Home-Assistant-URL ein, zum Beispiel `http://homeassistant.local:8123`.
-6. Melde dich mit Home Assistant an oder verwende einen Long-Lived Access Token.
-7. Öffne in Home Assistant das Sidebar-Panel **Android Kiosk**.
-8. Wähle dein Gerät aus.
-9. Konfiguriere Browser, Seiten, Rotation, Hintergrund, Medien und Sprache.
-10. Sende einmal:
-    - **Browser-Konfiguration senden**
-    - **Slideshow ans Gerät senden**
-    - **Rotation ans Gerät senden**
-11. Danach kann das Tablet die gespeicherten Einstellungen selbständig abrufen.
-
-### Admin-Webinterface umstellen
-
-Oben rechts im Sidebar-Panel gibt es den Schalter **Admin-Sprache**.
-
-- **Deutsch** zeigt die komplette Verwaltungsseite auf Deutsch.
-- **English** zeigt die komplette Verwaltungsseite auf Englisch.
-
-Diese Einstellung ist unabhängig von der Dashboard-Sprache des Tablets. So kannst du zum Beispiel die Home-Assistant-Verwaltung auf Englisch bedienen, während das Tablet-Dashboard selbst auf Deutsch bleibt.
-
-### Dashboard-Sprache ändern
-
-Im Panel **Android Kiosk → Browser** findest du **Dashboard-Sprache**.
-
-Verfügbare Werte:
-
-- `de` = Deutsch
-- `en` = English
-
-Nach dem Ändern kannst du **Sprache anwenden** oder **Browser-Konfiguration senden** klicken. Die Android-App setzt dann die Sprache im WebView, schreibt passende Sprachwerte in den WebView-Speicher, setzt den `Accept-Language`-Header und lädt Home Assistant bei Bedarf einmal neu.
-
-Service-Beispiel:
-
-```yaml
-service: ha_android_kiosk.set_dashboard_language
-data:
-  device: bad_tablet
-  dashboard_language: en
+```bash
+adb install -r app-debug.apk
 ```
 
-Alternativ über die Browser-Konfiguration:
+Bei einem Update:
 
-```yaml
-service: ha_android_kiosk.set_browser_config
-data:
-  device: bad_tablet
-  dashboard_language: de
+```bash
+adb install -r app-debug.apk
 ```
 
-### Wichtige Services
+Falls Android Berechtigungen nicht sauber übernimmt, kann eine Neuinstallation helfen:
 
-| Service | Zweck |
+```bash
+adb uninstall com.hakiosk.android
+adb install app-debug.apk
+```
+
+---
+
+### 5. App starten und in Home Assistant anmelden
+
+Beim ersten Start der Android-App:
+
+1. Sprache wählen: **Deutsch** oder **English**.
+2. Home-Assistant-Adresse eintragen, zum Beispiel:
+
+```text
+http://homeassistant.local:8123
+```
+
+oder:
+
+```text
+http://192.168.1.240:8123
+```
+
+3. Home Assistant in der App öffnen.
+4. Mit einem Home-Assistant-Benutzer anmelden.
+5. Das gewünschte Dashboard öffnen.
+6. Danach kann das Gerät im Home-Assistant-Panel **Android Kiosk** verwaltet werden.
+
+Die App registriert sich nach der Anmeldung bei Home Assistant. Danach erscheint das Tablet im Android-Kiosk-Panel.
+
+---
+
+### 6. Tablet im Android-Kiosk-Panel auswählen
+
+Nach dem ersten Start meldet sich die Android-App bei Home Assistant.
+
+Im Sidebar-Panel **Android Kiosk**:
+
+1. Gerät auswählen.
+2. Prüfen, ob die Geräte-ID passt.
+3. Gerätename optional anpassen.
+4. Speichern.
+
+Die Geräte-ID ist wichtig für Automationen. Sie wird in YAML-Beispielen als Platzhalter verwendet.
+
+Beispiel-Platzhalter:
+
+```yaml
+device: android_kiosk_1234567890abcdef
+```
+
+In den eigenen Automationen muss dieser Wert durch die tatsächliche Geräte-ID ersetzt werden.
+
+---
+
+### 7. Eigene Dashboard-Seiten für das Tablet anlegen
+
+In Home Assistant sollte ein eigenes Dashboard für das Tablet erstellt werden, zum Beispiel:
+
+```text
+/badezimmer-display/wetter
+/badezimmer-display/kalender
+/badezimmer-display/sensoren
+```
+
+Im Panel **Android Kiosk → Screens** können diese Seiten hinterlegt werden.
+
+Pro Seite können gesetzt werden:
+
+- Name der Seite.
+- URL oder Pfad.
+- Anzeigedauer in Sekunden.
+- optionale Seitengröße in Prozent.
+
+Beispiel:
+
+```text
+Name: Wetter
+URL: /badezimmer-display/wetter
+Dauer: 20
+Größe: 120
+```
+
+Danach:
+
+1. **Speichern** klicken.
+2. **Rotation ans Gerät senden** klicken.
+
+Das Tablet rotiert anschließend automatisch durch die hinterlegten Seiten.
+
+---
+
+### 8. Browser und Kiosk-Modus konfigurieren
+
+Im Panel **Android Kiosk → Browser** werden Browser- und Kiosk-Einstellungen gesetzt.
+
+Wichtige Optionen:
+
+- Startseite.
+- Vollbild aktivieren.
+- Display wach halten.
+- Home-Assistant-Navigation ausblenden.
+- Hintergrund zuerst laden.
+- WebView transparent über Hintergrund legen.
+- Dashboard-Sprache Deutsch/Englisch.
+- Selbst-Sync-Intervall.
+- Recovery/Watchdog.
+- Standard-Seitengröße.
+
+Empfohlener Ablauf:
+
+1. Startseite setzen.
+2. Kiosk-Modus aktivieren.
+3. Display wach halten aktivieren.
+4. Selbst-Sync aktivieren, zum Beispiel `300` Sekunden.
+5. Speichern.
+6. **Browser-Konfiguration senden** klicken.
+
+Der Selbst-Sync sorgt dafür, dass das Tablet die gespeicherten Einstellungen regelmäßig selbst aus Home Assistant abholt. Das ist besonders wichtig, wenn das Tablet längere Zeit ausgeschaltet oder offline war.
+
+---
+
+### 9. Hintergrund-Slideshow einrichten
+
+Im Panel **Android Kiosk → Hintergrund** können Hintergrundbilder und Alben verwaltet werden.
+
+Ablauf:
+
+1. Album erstellen oder vorhandenes Album auswählen.
+2. Bilder hochladen.
+3. Album als aktive Slideshow wählen.
+4. Intervall, Zufall, Deckkraft und Darstellung einstellen.
+5. Speichern.
+6. **Slideshow ans Gerät senden** klicken.
+
+Die Android-App zeichnet den Hintergrund nativ hinter der Home-Assistant-WebView. Dadurch bleibt der Hintergrund auch sichtbar, wenn das Dashboard transparent geladen wird.
+
+Für ältere Tablets sollten Hintergrundbilder nicht unnötig groß sein. Empfohlen sind optimierte Bilder statt sehr große Originalfotos.
+
+---
+
+### 10. Wofür der Bereich „Automation & Tests“ gedacht ist
+
+Der Bereich **Automation & Tests** ist kein dauerhaftes Bedien-Dashboard.
+
+Er ist gedacht für:
+
+- kurze Tests von Ticker, Banner, Alert, Wetter, Kamera, Status-Overlay, TTS und Sound;
+- Vorschau, wie Meldungen auf dem Tablet aussehen;
+- kopierfertige YAML-Beispiele;
+- Diagnosebefehle wie Cache leeren oder App neu starten.
+
+Der echte Betrieb soll über Home-Assistant-Automationen laufen. Das Webinterface hilft nur beim Einrichten, Testen und Kopieren der passenden YAML-Vorlagen.
+
+---
+
+### 11. Wie Automationen funktionieren
+
+Eine Home-Assistant-Automation besteht meist aus drei Teilen:
+
+- **trigger**: Wann soll etwas passieren?
+- **condition**: Unter welcher Bedingung darf es passieren?
+- **action**: Was soll auf dem Tablet angezeigt oder abgespielt werden?
+
+Beispielstruktur:
+
+```yaml
+alias: Beispiel - Meldung auf Tablet anzeigen
+trigger:
+  - platform: state
+    entity_id: binary_sensor.beispiel_sensor
+    to: "on"
+condition: []
+action:
+  - service: ha_android_kiosk.show_banner
+    data:
+      device: android_kiosk_1234567890abcdef
+      title: "Info"
+      message: "Sensor wurde ausgelöst."
+      position: top
+      duration: 10
+mode: single
+```
+
+Wichtig: `device` muss immer zur Geräte-ID des Tablets passen.
+
+---
+
+### 12. Beispiel: Display-Seite wechseln
+
+Diese Automation öffnet eine bestimmte Dashboard-Seite auf dem Tablet.
+
+```yaml
+alias: Kiosk - Wetterseite öffnen
+trigger:
+  - platform: time
+    at: "07:00:00"
+action:
+  - service: ha_android_kiosk.open_url
+    data:
+      device: android_kiosk_1234567890abcdef
+      url: /badezimmer-display/wetter
+mode: single
+```
+
+---
+
+### 13. Beispiel: Rotation ans Tablet senden
+
+```yaml
+alias: Kiosk - Seitenrotation morgens setzen
+trigger:
+  - platform: time
+    at: "06:30:00"
+action:
+  - service: ha_android_kiosk.set_pages
+    data:
+      device: android_kiosk_1234567890abcdef
+      pages:
+        - name: Wetter
+          url: /badezimmer-display/wetter
+          duration: 20
+          zoom_percent: 120
+        - name: Kalender
+          url: /badezimmer-display/kalender
+          duration: 20
+          zoom_percent: 115
+        - name: Sensoren
+          url: /badezimmer-display/sensoren
+          duration: 15
+      rotate: true
+      pause_on_touch: true
+      touch_pause_seconds: 30
+mode: single
+```
+
+---
+
+### 14. Beispiel: Meldung als Banner anzeigen
+
+```yaml
+alias: Kiosk - Fenster Bad offen
+trigger:
+  - platform: state
+    entity_id: binary_sensor.fenster_bad
+    to: "on"
+action:
+  - service: ha_android_kiosk.show_banner
+    data:
+      device: android_kiosk_1234567890abcdef
+      title: "Fenster offen"
+      message: "Das Badezimmerfenster ist geöffnet."
+      position: top
+      duration: 20
+      color: "#f59e0b"
+      text_color: "#ffffff"
+      wake_screen: true
+mode: single
+```
+
+---
+
+### 15. Beispiel: TTS-Durchsage abspielen
+
+```yaml
+alias: Kiosk - Waschmaschine fertig
+trigger:
+  - platform: state
+    entity_id: sensor.waschmaschine_status
+    to: "fertig"
+action:
+  - service: ha_android_kiosk.tts_speak
+    data:
+      device: android_kiosk_1234567890abcdef
+      text: "Die Waschmaschine ist fertig."
+      language: de-DE
+      volume: 100
+      stream: alarm
+  - service: ha_android_kiosk.show_banner
+    data:
+      device: android_kiosk_1234567890abcdef
+      title: "Waschmaschine"
+      message: "Die Waschmaschine ist fertig."
+      duration: 30
+      position: bottom
+mode: single
+```
+
+---
+
+### 16. Beispiel: Türklingel mit Kamera anzeigen
+
+```yaml
+alias: Kiosk - Türklingel Kamera anzeigen
+trigger:
+  - platform: state
+    entity_id: binary_sensor.tuerklingel
+    to: "on"
+action:
+  - service: ha_android_kiosk.open_url
+    data:
+      device: android_kiosk_1234567890abcdef
+      url: /badezimmer-display/kamera
+  - service: ha_android_kiosk.show_camera
+    data:
+      device: android_kiosk_1234567890abcdef
+      camera_entity: camera.haustuer
+      title: "Haustür"
+      position: fullscreen
+      duration: 30
+      refresh_seconds: 5
+      wake_screen: true
+  - service: ha_android_kiosk.tts_speak
+    data:
+      device: android_kiosk_1234567890abcdef
+      text: "Es hat an der Haustür geklingelt."
+      language: de-DE
+      volume: 100
+      stream: alarm
+mode: restart
+```
+
+---
+
+### 17. Beispiel: Status-Overlay aus Sensoren
+
+```yaml
+alias: Kiosk - Hausstatus bei Bewegung anzeigen
+trigger:
+  - platform: state
+    entity_id: binary_sensor.bewegung_bad
+    to: "on"
+action:
+  - service: ha_android_kiosk.show_status_overlay
+    data:
+      device: android_kiosk_1234567890abcdef
+      title: "Hausstatus"
+      entities:
+        - sensor.bad_temperatur
+        - sensor.bad_luftfeuchtigkeit
+        - binary_sensor.fenster_bad
+        - sensor.waschmaschine_status
+      position: center
+      duration: 25
+      color: "#111827"
+      text_color: "#ffffff"
+      wake_screen: true
+mode: restart
+```
+
+---
+
+### 18. Beispiel: Wetter morgens anzeigen
+
+```yaml
+alias: Kiosk - Wetter morgens anzeigen
+trigger:
+  - platform: time
+    at: "06:45:00"
+action:
+  - service: ha_android_kiosk.show_weather
+    data:
+      device: android_kiosk_1234567890abcdef
+      weather_entity: weather.home
+      title: "Wetter heute"
+      position: top-left
+      layout: full
+      duration: 60
+      refresh_seconds: 300
+      show_forecast: true
+      show_pressure: true
+mode: single
+```
+
+---
+
+### 19. Beispiel: Morgen-Sequenz
+
+Eine Sequenz kann mehrere Anzeigen nacheinander abspielen.
+
+```yaml
+alias: Kiosk - Morgeninformation
+trigger:
+  - platform: time
+    at: "07:15:00"
+action:
+  - service: ha_android_kiosk.show_overlay_sequence
+    data:
+      device: android_kiosk_1234567890abcdef
+      steps:
+        - type: banner
+          title: "Guten Morgen"
+          message: "Hier sind die wichtigsten Informationen."
+          duration: 8
+          position: top
+        - type: weather
+          weather_entity: weather.home
+          title: "Wetter"
+          duration: 20
+          position: top-left
+        - type: status
+          title: "Hausstatus"
+          duration: 20
+          entities:
+            - sensor.bad_temperatur
+            - binary_sensor.fenster_bad
+            - sensor.waschmaschine_status
+mode: single
+```
+
+---
+
+### 20. Beispiel: Overlays wieder schließen
+
+```yaml
+alias: Kiosk - Anzeige aufräumen
+trigger:
+  - platform: time
+    at: "23:00:00"
+action:
+  - service: ha_android_kiosk.clear_overlays
+    data:
+      device: android_kiosk_1234567890abcdef
+mode: single
+```
+
+---
+
+### 21. Wichtige Services
+
+| Service | Funktion |
 | --- | --- |
-| `ha_android_kiosk.set_browser_config` | Browser, Kiosk-Modus, Zoom, Sprache, Reload und WebView-Verhalten setzen |
-| `ha_android_kiosk.set_dashboard_language` | Dashboard-Sprache Deutsch/Englisch setzen |
-| `ha_android_kiosk.open_url` | Sofort eine Dashboard-Seite öffnen |
-| `ha_android_kiosk.set_background_slideshow` | Hintergrund-Slideshow ans Gerät senden |
-| `ha_android_kiosk.set_background_album` | Ein gespeichertes Hintergrund-Album verwenden |
-| `ha_android_kiosk.set_pages` / `send_command` | Seitenrotation konfigurieren |
-| `ha_android_kiosk.tts_speak` | Sprachdurchsage ausgeben |
-| `ha_android_kiosk.play_media` | Medien oder Audio abspielen |
-| `ha_android_kiosk.set_audio_config` | TTS-/Audio-Lautstärke und Android-Audiokanal setzen |
-| `ha_android_kiosk.recover_dashboard` | Anzeige/Kiosk-Modus manuell reparieren |
-| `ha_android_kiosk.sync_settings` | Tablet zum erneuten Abrufen der gespeicherten Einstellungen auffordern |
-| `ha_android_kiosk.clear_webview_cache` | WebView-Cache, Verlauf, Cookies und WebStorage leeren und Seite neu laden |
-| `ha_android_kiosk.show_status_overlay` | Status-Overlay aus Sensoren/Entities erzeugen |
-| `ha_android_kiosk.show_overlay_sequence` | Mehrere Overlay-Schritte nacheinander anzeigen |
-| `ha_android_kiosk.clear_overlays` | Ticker, Banner, Alert, Wetter- und Kamera-Overlays ausblenden |
-| `ha_android_kiosk.identify_device` | Gerät kurz sichtbar markieren |
-| `ha_android_kiosk.report_device_state` | Sofort neuen Gerätestatus anfordern |
+| `ha_android_kiosk.open_url` | Dashboard-Seite öffnen |
+| `ha_android_kiosk.set_pages` | Seitenrotation setzen |
+| `ha_android_kiosk.set_browser_config` | Browser/Kiosk/Sprache/Zoom konfigurieren |
+| `ha_android_kiosk.set_background_slideshow` | Hintergrund-Slideshow senden |
+| `ha_android_kiosk.show_ticker` | Ticker anzeigen |
+| `ha_android_kiosk.show_banner` | Banner anzeigen |
+| `ha_android_kiosk.show_alert` | Alert anzeigen |
+| `ha_android_kiosk.show_weather` | Wetter-Overlay anzeigen |
+| `ha_android_kiosk.show_camera` | Kamera-Overlay anzeigen |
+| `ha_android_kiosk.show_status_overlay` | Sensoren als Status-Overlay anzeigen |
+| `ha_android_kiosk.show_overlay_sequence` | mehrere Overlays nacheinander anzeigen |
+| `ha_android_kiosk.tts_speak` | TTS-Durchsage abspielen |
+| `ha_android_kiosk.play_media` | Audio/Medien abspielen |
+| `ha_android_kiosk.clear_overlays` | Overlays schließen |
+| `ha_android_kiosk.clear_webview_cache` | WebView-Cache leeren |
+| `ha_android_kiosk.sync_settings` | Tablet zum Abrufen gespeicherter Einstellungen auffordern |
+| `ha_android_kiosk.recover_dashboard` | Anzeige/Kiosk-Modus reparieren |
 
-### YAML-Beispiele kopieren
+---
 
-Im Repository gibt es jetzt fertige Beispiele im Ordner [`examples/`](examples/) und zusätzlich eine deutsche Anleitung unter [`docs/YAML_EXAMPLES_DE.md`](docs/YAML_EXAMPLES_DE.md).
+### 22. Weitere YAML-Beispiele
 
-Enthalten sind unter anderem:
+Weitere kopierfertige Beispiele befinden sich im Repository:
 
-- `automation_doorbell_camera.yaml` – Seite wechseln, Banner anzeigen und Kamera-Overlay öffnen.
-- `automation_status_overlay.yaml` – Sensorwerte als Status-Overlay anzeigen.
-- `automation_morning_sequence.yaml` – Morgenanzeige mit Banner, Wetter und Status.
-- `automation_washing_machine_tts.yaml` – Meldung mit TTS-Durchsage.
-- `package_ha_android_kiosk_examples.yaml` – Beispiel-Package zum Kopieren nach `/config/packages/`.
-
-Kurzes Beispiel:
-
-```yaml
-service: ha_android_kiosk.show_status_overlay
-data:
-  device: bad_tablet
-  title: "Hausstatus"
-  entities:
-    - sensor.wohnzimmer_temperatur
-    - binary_sensor.fenster_bad
-    - sensor.waschmaschine_status
-  position: center
-  duration: 20
-  color: "#111827"
-  text_color: "#ffffff"
-  wake_screen: true
+```text
+docs/YAML_EXAMPLES_DE.md
+docs/AUTOMATION_LAB_DE.md
+examples/automation_lab_all_examples.yaml
+examples/display_rotation.yaml
+examples/ticker_from_sensors.yaml
+examples/doorbell_camera.yaml
+examples/status_overlay_sensors.yaml
+examples/morning_sequence.yaml
+examples/weather_overlay.yaml
+examples/washing_machine_tts.yaml
+examples/clear_overlays.yaml
 ```
 
+In den Beispielen müssen nur folgende Werte angepasst werden:
 
-### Hinweise für ältere Tablets
+- `device`
+- Dashboard-Pfade wie `/badezimmer-display/wetter`
+- Sensoren wie `sensor.bad_temperatur`
+- Binary-Sensoren wie `binary_sensor.fenster_bad`
+- Kameras wie `camera.haustuer`
+- Weather-Entities wie `weather.home`
 
-Für Android 6 / RK3288 / WebView 96 sind folgende Einstellungen empfohlen:
+---
 
-- **Home-Assistant-Navigation ausblenden** aktiv
-- **Hintergrund zuerst laden** aktiv
-- **WebView transparent** aktiv
-- **Selbst-Sync** etwa `300` Sekunden
-- **Recovery/Watchdog** etwa `45` Sekunden
-- Seiten-Zoom zuerst mit `110–120 %` testen
-- Hintergrundbilder möglichst nicht unnötig riesig hochladen
-- Für laute TTS-Durchsagen zuerst den Android-Audiokanal `alarm` testen
+### 23. Fehlerbehebung
+
+#### Tablet wird nicht angezeigt
+
+- App auf dem Tablet starten.
+- Home-Assistant-URL prüfen.
+- Anmeldung in Home Assistant prüfen.
+- Netzwerkverbindung prüfen.
+- Home Assistant neu starten.
+
+#### Dashboard bleibt leer
+
+- Browser-Konfiguration erneut senden.
+- Rotation erneut senden.
+- Slideshow erneut senden.
+- Service `ha_android_kiosk.recover_dashboard` ausführen.
+- WebView-Cache leeren.
+
+#### Hintergrund wird nicht angezeigt
+
+- Hintergrund-Slideshow erneut senden.
+- Prüfen, ob ein Album aktiv ist.
+- Prüfen, ob Bilder im Album vorhanden sind.
+- WebView transparent aktivieren.
+- Hintergrund zuerst laden aktivieren.
+
+#### TTS ist zu leise
+
+- Android-Gerätelautstärke prüfen.
+- In der Automation `volume: 100` setzen.
+- `stream: alarm` oder `stream: music` testen.
+- Audio-Fokus aktivieren, falls verfügbar.
+
+#### Sprache bleibt gemischt
+
+- HACS aktualisieren.
+- Home Assistant neu starten.
+- Browser hart neu laden.
+- Cache von Home Assistant im Browser leeren.
+- Admin-Sprache erneut auswählen.
 
 ---
 
 ## English
 
-### What is this project?
+### 1. Purpose of this project
 
-This project connects Home Assistant with a dedicated Android kiosk app. The Android app opens your Home Assistant dashboard inside a WebView and turns the tablet into a stable kiosk browser. The Home Assistant integration manages devices, pages, rotation, backgrounds, media, language, permissions and kiosk settings through its own sidebar panel.
+HA Android Kiosk turns an Android tablet into a Home Assistant wall display.
 
-The goal is a wall tablet that can recover by itself after a reboot, standby period or network interruption: load the background, show the dashboard, hide navigation, rotate pages, play TTS and regularly pull stored settings from Home Assistant.
+The Home Assistant integration provides device management, services, automation commands and the sidebar panel. The Android app runs on the tablet, opens Home Assistant inside a WebView and displays the configured dashboard pages in kiosk mode.
 
-### Main features
+The web interface is meant for setup, testing and copying YAML examples. Regular operation should then be handled by Home Assistant automations.
 
-- **Home Assistant kiosk browser**  
-  Displays Lovelace/dashboard pages inside the Android WebView and can open individual Home Assistant paths directly.
+Typical workflow:
 
-- **Kiosk mode without an extra HACS frontend plugin**  
-  The app can hide the Home Assistant header, sidebar, menu and top navigation directly inside the WebView. A separate `kiosk-mode` HACS plugin is not required.
-
-- **Admin web interface in German/English**  
-  The entire **Android Kiosk Admin** sidebar panel can be switched between German and English in the top-right corner. The selection is saved and applies to the whole management interface.
-
-- **Dashboard language German/English**  
-  Each device can use `de` or `en` as the dashboard language. The Android app asks for **Deutsch** or **English** on first launch. The language is stored locally and can later be changed from the Android Kiosk panel or via service call.
-
-- **Page rotation**  
-  Rotate multiple dashboard pages with custom durations. Touch pause prevents the tablet from changing pages while someone is interacting with it.
-
-- **Manual page zoom**  
-  Configure a global dashboard size, for example `120 %`, and optionally set a different zoom value for each page.
-
-- **Native background slideshow**  
-  The background is drawn by a native Android layer behind the WebView. This keeps the background visible even with a transparent WebView and larger dashboard zoom values.
-
-- **Background-first loading**  
-  The app can load the native background first and reveal the dashboard afterwards for a cleaner startup.
-
-- **Memory-safe background loader**  
-  Background images are loaded in a memory-conscious way, which is important for older Android tablets with limited Java heap.
-
-- **Self-sync from the tablet**  
-  The tablet can periodically pull browser, background, rotation and device settings from Home Assistant by itself.
-
-- **Local cache**  
-  The last known settings are cached in the Android app. If Home Assistant is not reachable immediately at startup, the tablet can still start with the previous configuration.
-
-- **Visual watchdog / recovery**  
-  The app can regularly reapply kiosk mode, background, transparency and zoom and can recover the dashboard if Home Assistant redraws parts of the layout.
-
-- **Audio, TTS and speaker boost**  
-  TTS announcements, sounds and media can be sent from Home Assistant to the tablet. The app can use Android streams such as `music` or `alarm`, request audio focus and set volume to maximum.
-
-- **Advanced overlays**  
-  Ticker, toast, banner, fullscreen/panel alert, clock, weather and camera overlays are supported. Ticker, banner and alerts support colors, text sizes, positions, duration, wake-screen, TTS, sound and vibration. The weather overlay can read data directly from a `weather.*` entity. The camera overlay supports position, size, duration and snapshot/proxy refresh.
-
-- **Status overlay from sensors**  
-  `show_status_overlay` can render a list of Home Assistant entities as a clear display overlay, for example temperatures, windows, doors, washing machine, PV power or energy price.
-
-- **Overlay sequences**  
-  `show_overlay_sequence` can show multiple steps one after another: banner, weather, status, camera and alerts. This is useful for morning routines, doorbell flows, night mode or information loops.
-
-- **Home Assistant entities per device**  
-  Each tablet exposes entities such as sensors, switches, numbers and a media player for automations.
-
-- **Device functions and permissions**  
-  Depending on the device and Android permissions, the app supports keep-screen-on, brightness, volume, orientation, vibration, front camera, camera motion detection and light sensor.
-
-
-### Web interface since version 1.9.16: setup instead of permanent manual control
-
-The sidebar panel is now structured more clearly:
-
-- **Screens**: configure dashboard pages, order, duration and per-page size.
-- **Browser**: configure kiosk mode, language, zoom, self-sync and loading behavior.
-- **Background**: manage albums, uploads and slideshow.
-- **Automation & Tests**: briefly test ticker, banner, alerts, weather, camera, status overlay, TTS, sound and device commands, then copy a matching YAML automation.
-- **Permissions**: define which functions Home Assistant may send to a device.
-- **Cleanup**: remove old test devices and registry entries.
-
-The old tabs **Messages**, **Modules**, **Device** and **Media/TTS** are no longer separate control pages. These functions are now grouped in **Automation & Tests**, because real operation should be controlled by automations. This keeps the web interface cleaner and lets the tablet run on its own.
-
-More details are available in [`docs/AUTOMATION_LAB_EN.md`](docs/AUTOMATION_LAB_EN.md).
-
-
-
-### First setup
-
-1. Install the HACS integration and restart Home Assistant.
+1. Install the integration through HACS.
 2. Install the Android APK on the tablet.
-3. Open the app.
-4. Select **Deutsch** or **English** on first launch.
-5. Enter your Home Assistant URL, for example `http://homeassistant.local:8123`.
-6. Sign in with Home Assistant or use a long-lived access token.
-7. Open the **Android Kiosk** sidebar panel in Home Assistant.
-8. Select your device.
-9. Configure browser, pages, rotation, background, media and language.
-10. Send once:
-    - **Send browser configuration**
-    - **Send slideshow to device**
-    - **Send rotation to device**
-11. After that, the tablet can pull the stored settings by itself.
+3. Start the app and sign in to Home Assistant.
+4. Add the tablet dashboard pages in the sidebar panel.
+5. Configure browser, kiosk mode, background and rotation.
+6. Copy YAML automations and replace the example sensors/entities.
+7. Let Home Assistant automations control the tablet automatically.
 
-### Change admin web interface language
+---
 
-The sidebar panel has an **Admin language** selector in the top-right corner.
+### 2. Requirements
 
-- **German** shows the full management page in German.
-- **English** shows the full management page in English.
+Required:
 
-This is independent from the tablet dashboard language. For example, you can manage Home Assistant in English while the tablet dashboard itself stays German.
+- Home Assistant with HACS.
+- An Android device or tablet.
+- The Android APK from the GitHub release or a locally built APK.
+- Network access from the tablet to Home Assistant.
+- A Home Assistant user account for signing in inside the Android app.
 
-### Change dashboard language
+A separate Home Assistant user account for the wall tablet is recommended. This account can have its own dashboard and visibility settings.
 
-In **Android Kiosk → Browser**, use **Dashboard language**.
+---
 
-Available values:
+### 3. Install through HACS
 
-- `de` = German
-- `en` = English
+1. Open Home Assistant.
+2. Open **HACS**.
+3. Open the menu in the top-right corner.
+4. Select **Custom repositories**.
+5. Paste the GitHub repository URL.
+6. Select category **Integration**.
+7. Add the repository.
+8. Search for **HA Android Kiosk** in HACS.
+9. Install the integration.
+10. Restart Home Assistant.
 
-After changing the value, click **Apply language** or **Send browser configuration**. The Android app sets the language inside the WebView, writes language values to WebView storage, sets the `Accept-Language` header and reloads Home Assistant once if needed.
+After the restart, the **Android Kiosk** panel appears in the Home Assistant sidebar.
 
-Service example:
+---
 
-```yaml
-service: ha_android_kiosk.set_dashboard_language
-data:
-  device: bathroom_tablet
-  dashboard_language: en
+### 4. Install the Android APK
+
+The APK is installed separately. It is not installed by HACS.
+
+#### Option A: Install the APK from a file
+
+1. Download the APK from the GitHub release.
+2. Copy the APK to the tablet.
+3. Open the APK on the tablet.
+4. Allow installation from unknown sources.
+5. Install the app.
+6. Start the app.
+
+#### Option B: Install the APK with ADB
+
+```bash
+adb install -r app-debug.apk
 ```
 
-Alternatively through the browser configuration:
+For updates:
 
-```yaml
-service: ha_android_kiosk.set_browser_config
-data:
-  device: bathroom_tablet
-  dashboard_language: de
+```bash
+adb install -r app-debug.apk
 ```
 
-### Important services
+If Android does not apply permissions cleanly, a fresh installation may help:
 
-| Service | Purpose |
-| --- | --- |
-| `ha_android_kiosk.set_browser_config` | Set browser, kiosk mode, zoom, language, reload and WebView behavior |
-| `ha_android_kiosk.set_dashboard_language` | Set dashboard language to German or English |
-| `ha_android_kiosk.open_url` | Open a dashboard page immediately |
-| `ha_android_kiosk.set_background_slideshow` | Send background slideshow configuration to the device |
-| `ha_android_kiosk.set_background_album` | Use a stored background album |
-| `ha_android_kiosk.set_pages` / `send_command` | Configure page rotation |
-| `ha_android_kiosk.tts_speak` | Play a text-to-speech announcement |
-| `ha_android_kiosk.play_media` | Play media or audio |
-| `ha_android_kiosk.set_audio_config` | Set TTS/media volume and Android audio stream |
-| `ha_android_kiosk.recover_dashboard` | Manually repair the dashboard display/kiosk mode |
-| `ha_android_kiosk.sync_settings` | Ask the tablet to pull stored settings again |
-| `ha_android_kiosk.clear_webview_cache` | Clear WebView cache, history, cookies and WebStorage, then reload the page |
-| `ha_android_kiosk.clear_overlays` | Hide ticker, banner, alert, weather and camera overlays |
-| `ha_android_kiosk.identify_device` | Visibly identify the device for a short time |
-| `ha_android_kiosk.report_device_state` | Request a fresh device status immediately |
-
-
-
-
-### Tips for older tablets
-
-Recommended settings for Android 6 / RK3288 / WebView 96:
-
-- enable **Hide Home Assistant navigation**
-- enable **Load background first**
-- enable **Transparent WebView**
-- keep **Self-sync** around `300` seconds
-- keep **Recovery/Watchdog** around `45` seconds
-- start page zoom with `110–120 %`
-- avoid unnecessarily huge background images
-- test Android audio stream `alarm` first for louder TTS announcements
-
-### License
-
-MIT License. See [LICENSE](LICENSE).
-
-
-### YAML examples
-
-Ready-to-copy YAML examples are available in [`examples/`](examples/) and in [`docs/YAML_EXAMPLES_EN.md`](docs/YAML_EXAMPLES_EN.md). They cover doorbell camera flows, sensor status overlays, morning sequences and TTS messages.
-
-```yaml
-service: ha_android_kiosk.show_status_overlay
-data:
-  device: bad_tablet
-  title: "Home status"
-  entities:
-    - sensor.living_room_temperature
-    - binary_sensor.bathroom_window
-    - sensor.washing_machine_status
-  position: center
-  duration: 20
-  color: "#111827"
-  text_color: "#ffffff"
-  wake_screen: true
+```bash
+adb uninstall com.hakiosk.android
+adb install app-debug.apk
 ```
 
 ---
 
-## Overlay and YAML examples / Overlay- und YAML-Beispiele
+### 5. Start the app and sign in to Home Assistant
 
-### Deutsch
+On first launch of the Android app:
 
-Ab Version **1.9.16** sind die Anzeige-Overlays stärker ausgebaut:
+1. Select the language: **Deutsch** or **English**.
+2. Enter the Home Assistant address, for example:
 
-- **Ticker**: Position oben/unten, Höhe, Textgröße, Farben, feste Meldungen, Live-Meldungen und Sensorwerte.
-- **Banner**: Position oben/unten/mittig, Höhe, Textgröße, Farben, Dauer, Wake-Screen, TTS und Sound.
-- **Alert**: Vollbild, Panel, Banner oder Toast; Severity-Farben, TTS, Sound, Vibration und Dauer.
-- **Wetter-Overlay**: liest eine `weather.*`-Entity aus Home Assistant und kann Temperatur, Feuchte, Wind, Druck und Forecast anzeigen.
-- **Kamera-Overlay**: zeigt `camera.*`-Entities oder direkte URLs, mit Position, Größe, Dauer und Refresh-Intervall.
-- **Status-Overlay**: baut automatisch eine Anzeige aus Sensoren und Binary-Sensoren.
-- **Overlay-Sequenz**: mehrere Schritte nacheinander, zum Beispiel Seite wechseln, Banner anzeigen, Wetter anzeigen, Kamera anzeigen und danach Status anzeigen.
+```text
+http://homeassistant.local:8123
+```
 
-Kopierfertige YAML-Beispiele findest du hier:
+or:
 
-- [`docs/YAML_EXAMPLES_DE.md`](docs/YAML_EXAMPLES_DE.md)
-- [`docs/AUTOMATION_LAB_DE.md`](docs/AUTOMATION_LAB_DE.md)
-- [`examples/automation_lab_all_examples.yaml`](examples/automation_lab_all_examples.yaml)
-- [`examples/display_rotation.yaml`](examples/display_rotation.yaml)
-- [`examples/ticker_from_sensors.yaml`](examples/ticker_from_sensors.yaml)
-- [`examples/doorbell_camera.yaml`](examples/doorbell_camera.yaml)
-- [`examples/status_overlay_sensors.yaml`](examples/status_overlay_sensors.yaml)
-- [`examples/morning_sequence.yaml`](examples/morning_sequence.yaml)
-- [`examples/weather_overlay.yaml`](examples/weather_overlay.yaml)
-- [`examples/washing_machine_tts.yaml`](examples/washing_machine_tts.yaml)
+```text
+http://192.168.1.240:8123
+```
 
-Die wichtigsten neuen Services:
+3. Open Home Assistant inside the app.
+4. Sign in with a Home Assistant user.
+5. Open the desired dashboard.
+6. The device can then be managed from the **Android Kiosk** panel in Home Assistant.
 
-| Service | Zweck |
+The app registers itself with Home Assistant after sign-in. The tablet then appears in the Android Kiosk panel.
+
+---
+
+### 6. Select the tablet in the Android Kiosk panel
+
+After the first app start, the Android app registers with Home Assistant.
+
+In the **Android Kiosk** sidebar panel:
+
+1. Select the device.
+2. Check that the device ID is correct.
+3. Optionally change the device name.
+4. Save.
+
+The device ID is important for automations. It is used as a placeholder in YAML examples.
+
+Example placeholder:
+
+```yaml
+device: android_kiosk_1234567890abcdef
+```
+
+In real automations, this value must be replaced with the actual device ID.
+
+---
+
+### 7. Create dashboard pages for the tablet
+
+A separate Home Assistant dashboard for the tablet is recommended, for example:
+
+```text
+/bathroom-display/weather
+/bathroom-display/calendar
+/bathroom-display/sensors
+```
+
+These pages can be added in **Android Kiosk → Screens**.
+
+Each page can define:
+
+- page name;
+- URL or path;
+- display duration in seconds;
+- optional page size in percent.
+
+Example:
+
+```text
+Name: Weather
+URL: /bathroom-display/weather
+Duration: 20
+Size: 120
+```
+
+Then:
+
+1. Click **Save**.
+2. Click **Send rotation to device**.
+
+The tablet will then rotate automatically through the configured pages.
+
+---
+
+### 8. Configure browser and kiosk mode
+
+Browser and kiosk settings are configured in **Android Kiosk → Browser**.
+
+Important options:
+
+- start page;
+- fullscreen mode;
+- keep screen on;
+- hide Home Assistant navigation;
+- load background first;
+- transparent WebView over the background;
+- dashboard language German/English;
+- self-sync interval;
+- recovery/watchdog;
+- default page size.
+
+Recommended workflow:
+
+1. Set the start page.
+2. Enable kiosk mode.
+3. Enable keep screen on.
+4. Enable self-sync, for example `300` seconds.
+5. Save.
+6. Click **Send browser configuration**.
+
+Self-sync allows the tablet to periodically pull its stored settings from Home Assistant. This is especially useful if the tablet has been powered off or offline for a long time.
+
+---
+
+### 9. Configure background slideshow
+
+Background images and albums are managed in **Android Kiosk → Background**.
+
+Workflow:
+
+1. Create an album or select an existing album.
+2. Upload images.
+3. Choose the album as the active slideshow.
+4. Configure interval, random order, opacity and display mode.
+5. Save.
+6. Click **Send slideshow to device**.
+
+The Android app draws the background as a native layer behind the Home Assistant WebView. This keeps the background visible when the dashboard is loaded with transparency.
+
+For older tablets, background images should not be unnecessarily large. Optimized images are recommended instead of very large original photos.
+
+---
+
+### 10. Purpose of “Automation & Tests”
+
+The **Automation & Tests** area is not intended to be a permanent control dashboard.
+
+It is meant for:
+
+- quick tests of ticker, banner, alert, weather, camera, status overlay, TTS and sound;
+- previewing how messages will look on the tablet;
+- ready-to-copy YAML examples;
+- diagnostic commands such as clearing cache or restarting the app.
+
+Regular operation should be handled by Home Assistant automations. The web interface only helps with setup, tests and copying YAML templates.
+
+---
+
+### 11. How automations work
+
+A Home Assistant automation usually contains three parts:
+
+- **trigger**: when should something happen?
+- **condition**: under which condition may it happen?
+- **action**: what should be shown or played on the tablet?
+
+Example structure:
+
+```yaml
+alias: Example - Show message on tablet
+trigger:
+  - platform: state
+    entity_id: binary_sensor.example_sensor
+    to: "on"
+condition: []
+action:
+  - service: ha_android_kiosk.show_banner
+    data:
+      device: android_kiosk_1234567890abcdef
+      title: "Info"
+      message: "The sensor was triggered."
+      position: top
+      duration: 10
+mode: single
+```
+
+Important: `device` must always match the device ID of the tablet.
+
+---
+
+### 12. Example: Change display page
+
+This automation opens a specific dashboard page on the tablet.
+
+```yaml
+alias: Kiosk - Open weather page
+trigger:
+  - platform: time
+    at: "07:00:00"
+action:
+  - service: ha_android_kiosk.open_url
+    data:
+      device: android_kiosk_1234567890abcdef
+      url: /bathroom-display/weather
+mode: single
+```
+
+---
+
+### 13. Example: Send page rotation to the tablet
+
+```yaml
+alias: Kiosk - Set morning page rotation
+trigger:
+  - platform: time
+    at: "06:30:00"
+action:
+  - service: ha_android_kiosk.set_pages
+    data:
+      device: android_kiosk_1234567890abcdef
+      pages:
+        - name: Weather
+          url: /bathroom-display/weather
+          duration: 20
+          zoom_percent: 120
+        - name: Calendar
+          url: /bathroom-display/calendar
+          duration: 20
+          zoom_percent: 115
+        - name: Sensors
+          url: /bathroom-display/sensors
+          duration: 15
+      rotate: true
+      pause_on_touch: true
+      touch_pause_seconds: 30
+mode: single
+```
+
+---
+
+### 14. Example: Show a message as banner
+
+```yaml
+alias: Kiosk - Bathroom window open
+trigger:
+  - platform: state
+    entity_id: binary_sensor.bathroom_window
+    to: "on"
+action:
+  - service: ha_android_kiosk.show_banner
+    data:
+      device: android_kiosk_1234567890abcdef
+      title: "Window open"
+      message: "The bathroom window is open."
+      position: top
+      duration: 20
+      color: "#f59e0b"
+      text_color: "#ffffff"
+      wake_screen: true
+mode: single
+```
+
+---
+
+### 15. Example: Play a TTS announcement
+
+```yaml
+alias: Kiosk - Washing machine finished
+trigger:
+  - platform: state
+    entity_id: sensor.washing_machine_status
+    to: "finished"
+action:
+  - service: ha_android_kiosk.tts_speak
+    data:
+      device: android_kiosk_1234567890abcdef
+      text: "The washing machine is finished."
+      language: en-US
+      volume: 100
+      stream: alarm
+  - service: ha_android_kiosk.show_banner
+    data:
+      device: android_kiosk_1234567890abcdef
+      title: "Washing machine"
+      message: "The washing machine is finished."
+      duration: 30
+      position: bottom
+mode: single
+```
+
+---
+
+### 16. Example: Doorbell with camera overlay
+
+```yaml
+alias: Kiosk - Show doorbell camera
+trigger:
+  - platform: state
+    entity_id: binary_sensor.doorbell
+    to: "on"
+action:
+  - service: ha_android_kiosk.open_url
+    data:
+      device: android_kiosk_1234567890abcdef
+      url: /bathroom-display/camera
+  - service: ha_android_kiosk.show_camera
+    data:
+      device: android_kiosk_1234567890abcdef
+      camera_entity: camera.front_door
+      title: "Front door"
+      position: fullscreen
+      duration: 30
+      refresh_seconds: 5
+      wake_screen: true
+  - service: ha_android_kiosk.tts_speak
+    data:
+      device: android_kiosk_1234567890abcdef
+      text: "Someone rang the front doorbell."
+      language: en-US
+      volume: 100
+      stream: alarm
+mode: restart
+```
+
+---
+
+### 17. Example: Status overlay from sensors
+
+```yaml
+alias: Kiosk - Show home status on motion
+trigger:
+  - platform: state
+    entity_id: binary_sensor.bathroom_motion
+    to: "on"
+action:
+  - service: ha_android_kiosk.show_status_overlay
+    data:
+      device: android_kiosk_1234567890abcdef
+      title: "Home status"
+      entities:
+        - sensor.bathroom_temperature
+        - sensor.bathroom_humidity
+        - binary_sensor.bathroom_window
+        - sensor.washing_machine_status
+      position: center
+      duration: 25
+      color: "#111827"
+      text_color: "#ffffff"
+      wake_screen: true
+mode: restart
+```
+
+---
+
+### 18. Example: Show morning weather
+
+```yaml
+alias: Kiosk - Show morning weather
+trigger:
+  - platform: time
+    at: "06:45:00"
+action:
+  - service: ha_android_kiosk.show_weather
+    data:
+      device: android_kiosk_1234567890abcdef
+      weather_entity: weather.home
+      title: "Weather today"
+      position: top-left
+      layout: full
+      duration: 60
+      refresh_seconds: 300
+      show_forecast: true
+      show_pressure: true
+mode: single
+```
+
+---
+
+### 19. Example: Morning sequence
+
+A sequence can show multiple overlays one after another.
+
+```yaml
+alias: Kiosk - Morning information
+trigger:
+  - platform: time
+    at: "07:15:00"
+action:
+  - service: ha_android_kiosk.show_overlay_sequence
+    data:
+      device: android_kiosk_1234567890abcdef
+      steps:
+        - type: banner
+          title: "Good morning"
+          message: "Here is the most important information."
+          duration: 8
+          position: top
+        - type: weather
+          weather_entity: weather.home
+          title: "Weather"
+          duration: 20
+          position: top-left
+        - type: status
+          title: "Home status"
+          duration: 20
+          entities:
+            - sensor.bathroom_temperature
+            - binary_sensor.bathroom_window
+            - sensor.washing_machine_status
+mode: single
+```
+
+---
+
+### 20. Example: Clear overlays
+
+```yaml
+alias: Kiosk - Clear display
+trigger:
+  - platform: time
+    at: "23:00:00"
+action:
+  - service: ha_android_kiosk.clear_overlays
+    data:
+      device: android_kiosk_1234567890abcdef
+mode: single
+```
+
+---
+
+### 21. Important services
+
+| Service | Function |
 | --- | --- |
-| `ha_android_kiosk.show_sensor_overlay` | Sensoren automatisch als Ticker, Banner, Toast, Weather oder Alert anzeigen |
-| `ha_android_kiosk.show_status_overlay` | mehrere Sensoren als Status-Panel anzeigen |
-| `ha_android_kiosk.show_overlay_sequence` | mehrere Overlays nacheinander abspielen |
-| `ha_android_kiosk.clear_banner` | nur Banner schließen |
-| `ha_android_kiosk.clear_weather` | nur Wetter-Overlay schließen |
-| `ha_android_kiosk.clear_camera` | nur Kamera-Overlay schließen |
-| `ha_android_kiosk.clear_overlays` | alle Overlays schließen |
+| `ha_android_kiosk.open_url` | Open a dashboard page |
+| `ha_android_kiosk.set_pages` | Set page rotation |
+| `ha_android_kiosk.set_browser_config` | Configure browser/kiosk/language/zoom |
+| `ha_android_kiosk.set_background_slideshow` | Send background slideshow |
+| `ha_android_kiosk.show_ticker` | Show ticker |
+| `ha_android_kiosk.show_banner` | Show banner |
+| `ha_android_kiosk.show_alert` | Show alert |
+| `ha_android_kiosk.show_weather` | Show weather overlay |
+| `ha_android_kiosk.show_camera` | Show camera overlay |
+| `ha_android_kiosk.show_status_overlay` | Show sensors as status overlay |
+| `ha_android_kiosk.show_overlay_sequence` | Show multiple overlays step by step |
+| `ha_android_kiosk.tts_speak` | Play TTS announcement |
+| `ha_android_kiosk.play_media` | Play audio/media |
+| `ha_android_kiosk.clear_overlays` | Close overlays |
+| `ha_android_kiosk.clear_webview_cache` | Clear WebView cache |
+| `ha_android_kiosk.sync_settings` | Ask the tablet to pull stored settings |
+| `ha_android_kiosk.recover_dashboard` | Repair display/kiosk mode |
 
-### English
+---
 
-Since version **1.9.16**, the display overlays are more powerful:
+### 22. More YAML examples
 
-- **Ticker**: top/bottom position, height, text size, colors, fixed messages, live messages and sensor values.
-- **Banner**: top/bottom/center position, height, text size, colors, duration, wake screen, TTS and sound.
-- **Alert**: fullscreen, panel, banner or toast; severity colors, TTS, sound, vibration and duration.
-- **Weather overlay**: reads a Home Assistant `weather.*` entity and can show temperature, humidity, wind, pressure and forecast.
-- **Camera overlay**: shows `camera.*` entities or direct URLs with position, size, duration and refresh interval.
-- **Status overlay**: automatically builds a display card from sensors and binary sensors.
-- **Overlay sequence**: plays multiple steps, for example open page, show banner, show weather, show camera and then show status.
+More ready-to-copy examples are available in the repository:
 
-Ready-to-copy YAML examples are available here:
+```text
+docs/YAML_EXAMPLES_EN.md
+docs/AUTOMATION_LAB_EN.md
+examples/automation_lab_all_examples.yaml
+examples/display_rotation.yaml
+examples/ticker_from_sensors.yaml
+examples/doorbell_camera.yaml
+examples/status_overlay_sensors.yaml
+examples/morning_sequence.yaml
+examples/weather_overlay.yaml
+examples/washing_machine_tts.yaml
+examples/clear_overlays.yaml
+```
 
-- [`docs/YAML_EXAMPLES_EN.md`](docs/YAML_EXAMPLES_EN.md)
-- [`docs/AUTOMATION_LAB_EN.md`](docs/AUTOMATION_LAB_EN.md)
-- [`examples/automation_lab_all_examples.yaml`](examples/automation_lab_all_examples.yaml)
-- [`examples/display_rotation.yaml`](examples/display_rotation.yaml)
-- [`examples/ticker_from_sensors.yaml`](examples/ticker_from_sensors.yaml)
-- [`examples/doorbell_camera.yaml`](examples/doorbell_camera.yaml)
-- [`examples/status_overlay_sensors.yaml`](examples/status_overlay_sensors.yaml)
-- [`examples/morning_sequence.yaml`](examples/morning_sequence.yaml)
-- [`examples/weather_overlay.yaml`](examples/weather_overlay.yaml)
-- [`examples/washing_machine_tts.yaml`](examples/washing_machine_tts.yaml)
+Only the following values usually need to be changed in the examples:
 
-Important services:
+- `device`
+- dashboard paths such as `/bathroom-display/weather`
+- sensors such as `sensor.bathroom_temperature`
+- binary sensors such as `binary_sensor.bathroom_window`
+- cameras such as `camera.front_door`
+- weather entities such as `weather.home`
 
-| Service | Purpose |
-| --- | --- |
-| `ha_android_kiosk.show_sensor_overlay` | automatically show sensors as ticker, banner, toast, weather or alert |
-| `ha_android_kiosk.show_status_overlay` | show multiple sensors as a status panel |
-| `ha_android_kiosk.show_overlay_sequence` | play multiple overlays step by step |
-| `ha_android_kiosk.clear_banner` | close only the banner |
-| `ha_android_kiosk.clear_weather` | close only the weather overlay |
-| `ha_android_kiosk.clear_camera` | close only the camera overlay |
-| `ha_android_kiosk.clear_overlays` | close all overlays |
+---
+
+### 23. Troubleshooting
+
+#### Tablet does not appear
+
+- Start the app on the tablet.
+- Check the Home Assistant URL.
+- Check the Home Assistant sign-in.
+- Check the network connection.
+- Restart Home Assistant.
+
+#### Dashboard stays blank
+
+- Send browser configuration again.
+- Send rotation again.
+- Send slideshow again.
+- Run the service `ha_android_kiosk.recover_dashboard`.
+- Clear the WebView cache.
+
+#### Background is not visible
+
+- Send background slideshow again.
+- Check if an album is active.
+- Check if the album contains images.
+- Enable transparent WebView.
+- Enable background-first loading.
+
+#### TTS is too quiet
+
+- Check the Android device volume.
+- Set `volume: 100` in the automation.
+- Test `stream: alarm` or `stream: music`.
+- Enable audio focus if available.
+
+#### Language stays mixed
+
+- Update through HACS.
+- Restart Home Assistant.
+- Hard-refresh the browser.
+- Clear the Home Assistant browser cache.
+- Select the admin language again.
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE).
