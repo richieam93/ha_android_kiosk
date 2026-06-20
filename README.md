@@ -68,46 +68,9 @@ Das Ziel ist ein Wandtablet, das nach Neustart, Standby oder Netzwerkunterbruch 
 - **Berechtigungen und Gerätefunktionen**  
   Unterstützt werden unter anderem Display wach halten, Helligkeit, Lautstärke, Orientierung, Vibration, Frontkamera, Kamera-Bewegungserkennung und Lichtsensor, abhängig vom Gerät und den Android-Berechtigungen.
 
-### HACS-Installation
 
-Dieses Repository ist als **HACS Integration Repository** vorbereitet.
 
-1. Lade den Inhalt dieses Projekts in dein GitHub-Repository hoch.
-2. Erstelle optional einen GitHub Release, zum Beispiel `v1.9.13`.
-3. Lade deine selbst gebaute APK optional als Release Asset hoch.
-4. Öffne Home Assistant.
-5. Öffne **HACS**.
-6. Öffne **Custom repositories**.
-7. Füge die GitHub-Repository-URL ein.
-8. Wähle als Kategorie **Integration**.
-9. Installiere **HA Android Kiosk**.
-10. Starte Home Assistant neu.
-11. Gehe zu **Einstellungen → Geräte & Dienste → Integration hinzufügen**.
-12. Füge **HA Android Kiosk** hinzu.
-13. Danach erscheint in der Sidebar das Panel **Android Kiosk**.
 
-### Android-App installieren
-
-Die APK wird nicht automatisch durch HACS installiert. HACS installiert nur die Home-Assistant-Integration unter `custom_components/ha_android_kiosk`.
-
-Du kannst die APK selbst bauen:
-
-```bash
-cd android-app
-./gradlew assembleDebug
-```
-
-Unter Windows:
-
-```bat
-cd android-app
-gradlew.bat assembleDebug
-```
-
-Installieren per ADB:
-
-```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ### Erste Einrichtung
@@ -127,33 +90,8 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
     - **Rotation ans Gerät senden**
 11. Danach kann das Tablet die gespeicherten Einstellungen selbständig abrufen.
 
-### Dashboard-Sprache ändern
 
-Im Panel **Android Kiosk → Browser** findest du **Dashboard-Sprache**.
 
-Verfügbare Werte:
-
-- `de` = Deutsch
-- `en` = English
-
-Nach dem Ändern kannst du **Sprache anwenden** oder **Browser-Konfiguration senden** klicken. Die Android-App setzt dann die Sprache im WebView, schreibt passende Sprachwerte in den WebView-Speicher, setzt den `Accept-Language`-Header und lädt Home Assistant bei Bedarf einmal neu.
-
-Service-Beispiel:
-
-```yaml
-service: ha_android_kiosk.set_dashboard_language
-data:
-  device: bad_tablet
-  dashboard_language: en
-```
-
-Alternativ über die Browser-Konfiguration:
-
-```yaml
-service: ha_android_kiosk.set_browser_config
-data:
-  device: bad_tablet
-  dashboard_language: de
 ```
 
 ### Wichtige Services
@@ -172,23 +110,6 @@ data:
 | `ha_android_kiosk.recover_dashboard` | Anzeige/Kiosk-Modus manuell reparieren |
 | `ha_android_kiosk.sync_settings` | Tablet zum erneuten Abrufen der gespeicherten Einstellungen auffordern |
 
-### Repository-Struktur
-
-```text
-ha_android_kiosk/
-├─ custom_components/ha_android_kiosk/   # Home-Assistant-/HACS-Integration
-│  ├─ static/                            # Sidebar-Webinterface
-│  ├─ translations/                      # HA-Config-Flow-Übersetzungen
-│  ├─ __init__.py                        # API, Services, Panel, Geräteverwaltung
-│  ├─ manifest.json                      # HA-Integration-Metadaten
-│  └─ services.yaml                      # Service-Beschreibungen
-├─ android-app/                          # Android-Kiosk-App
-│  └─ app/src/main/java/com/hakiosk/android/
-├─ hacs.json                             # HACS-Metadaten
-├─ README.md
-├─ LICENSE
-└─ pyproject.toml
-```
 
 ### Hinweise für ältere Tablets
 
@@ -260,47 +181,8 @@ The goal is a wall tablet that can recover by itself after a reboot, standby per
 - **Device functions and permissions**  
   Depending on the device and Android permissions, the app supports keep-screen-on, brightness, volume, orientation, vibration, front camera, camera motion detection and light sensor.
 
-### HACS installation
 
-This repository is prepared as a **HACS Integration Repository**.
 
-1. Upload this project to your GitHub repository.
-2. Optionally create a GitHub release, for example `v1.9.13`.
-3. Optionally upload your APK as a release asset.
-4. Open Home Assistant.
-5. Open **HACS**.
-6. Open **Custom repositories**.
-7. Paste your GitHub repository URL.
-8. Choose **Integration** as the category.
-9. Install **HA Android Kiosk**.
-10. Restart Home Assistant.
-11. Go to **Settings → Devices & services → Add integration**.
-12. Add **HA Android Kiosk**.
-13. The **Android Kiosk** panel appears in the sidebar.
-
-### Install the Android app
-
-HACS does not install the APK. HACS only installs the Home Assistant integration under `custom_components/ha_android_kiosk`.
-
-Build the APK yourself:
-
-```bash
-cd android-app
-./gradlew assembleDebug
-```
-
-On Windows:
-
-```bat
-cd android-app
-gradlew.bat assembleDebug
-```
-
-Install through ADB:
-
-```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
 
 ### First setup
 
@@ -319,33 +201,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
     - **Send rotation to device**
 11. After that, the tablet can pull the stored settings by itself.
 
-### Change dashboard language
 
-In **Android Kiosk → Browser**, use **Dashboard language**.
-
-Available values:
-
-- `de` = German
-- `en` = English
-
-After changing the value, click **Apply language** or **Send browser configuration**. The Android app sets the language inside the WebView, writes language values to WebView storage, sets the `Accept-Language` header and reloads Home Assistant once if needed.
-
-Service example:
-
-```yaml
-service: ha_android_kiosk.set_dashboard_language
-data:
-  device: bathroom_tablet
-  dashboard_language: en
-```
-
-Alternatively through the browser configuration:
-
-```yaml
-service: ha_android_kiosk.set_browser_config
-data:
-  device: bathroom_tablet
-  dashboard_language: de
 ```
 
 ### Important services
@@ -364,36 +220,9 @@ data:
 | `ha_android_kiosk.recover_dashboard` | Manually repair the dashboard display/kiosk mode |
 | `ha_android_kiosk.sync_settings` | Ask the tablet to pull stored settings again |
 
-### Repository structure
 
-```text
-ha_android_kiosk/
-├─ custom_components/ha_android_kiosk/   # Home Assistant / HACS integration
-│  ├─ static/                            # Sidebar web interface
-│  ├─ translations/                      # HA config-flow translations
-│  ├─ __init__.py                        # API, services, panel, device handling
-│  ├─ manifest.json                      # HA integration metadata
-│  └─ services.yaml                      # Service descriptions
-├─ android-app/                          # Android kiosk app
-│  └─ app/src/main/java/com/hakiosk/android/
-├─ hacs.json                             # HACS metadata
-├─ README.md
-├─ LICENSE
-└─ pyproject.toml
-```
 
-### Tips for older tablets
 
-Recommended settings for Android 6 / RK3288 / WebView 96:
-
-- enable **Hide Home Assistant navigation**
-- enable **Load background first**
-- enable **Transparent WebView**
-- keep **Self-sync** around `300` seconds
-- keep **Recovery/Watchdog** around `45` seconds
-- start page zoom with `110–120 %`
-- avoid unnecessarily huge background images
-- test Android audio stream `alarm` first for louder TTS announcements
 
 ### License
 
