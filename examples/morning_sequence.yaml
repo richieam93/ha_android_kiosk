@@ -1,0 +1,36 @@
+alias: Kiosk - Morgenanzeige
+mode: single
+trigger:
+  - platform: time
+    at: "07:00:00"
+action:
+  - service: ha_android_kiosk.goto_screen
+    data:
+      device: bad_tablet
+      screen_id: /lovelace/start
+  - service: ha_android_kiosk.show_overlay_sequence
+    data:
+      device: bad_tablet
+      default_duration: 8
+      gap: 1
+      steps:
+        - type: banner
+          title: "Guten Morgen"
+          message: "Hier ist dein Tagesstart"
+          color: "#2563eb"
+          duration: 5
+        - type: weather
+          entity_id: weather.home
+          title: "Wetter"
+          position: top-left
+          layout: full
+          show_forecast: true
+          duration: 10
+        - type: status_overlay
+          title: "Wichtige Werte"
+          entities:
+            - sensor.aussentemperatur
+            - sensor.strompreis
+            - sensor.pv_leistung
+          position: center
+          duration: 12

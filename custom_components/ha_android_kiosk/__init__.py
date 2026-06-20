@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import mimetypes
 import re
@@ -73,9 +74,14 @@ COMMAND_PERMISSIONS: dict[str, str] = {
     "alert": "alerts",
     "clear_alert": "alerts",
     "clear": "alerts",
+    "clear_banner": "alerts",
+    "clear_weather": "weather",
+    "clear_camera": "camera_overlay",
     "clock": "clock",
     "weather": "weather",
     "camera": "camera_overlay",
+    "status_overlay": "alerts",
+    "overlay_sequence": "alerts",
     # Device controls
     "screen": "display",
     "set_screen_power": "display",
@@ -153,6 +159,12 @@ SERVICE_NAMES: tuple[str, ...] = (
     "show_clock",
     "show_weather",
     "show_camera",
+    "show_sensor_overlay",
+    "show_status_overlay",
+    "show_overlay_sequence",
+    "clear_banner",
+    "clear_weather",
+    "clear_camera",
     "clear_alert",
     "next_screen",
     "previous_screen",
@@ -160,6 +172,8 @@ SERVICE_NAMES: tuple[str, ...] = (
     "pause_rotation",
     "resume_rotation",
     "reload_page",
+    "clear_webview_cache",
+    "clear_overlays",
     "sync_settings",
     "recover_dashboard",
     "identify_device",
@@ -261,7 +275,7 @@ async def _async_setup_once(hass: HomeAssistant) -> bool:
         webcomponent_name="ha-android-kiosk-panel",
         sidebar_title="Android Kiosk",
         sidebar_icon="mdi:tablet-dashboard",
-        module_url=f"{STATIC_URL}/ha-android-kiosk-panel.js?v=1.9.13",
+        module_url=f"{STATIC_URL}/ha-android-kiosk-panel.js?v=1.9.16",
         require_admin=True,
         config_panel_domain=DOMAIN,
     )
@@ -494,6 +508,125 @@ async def _resolve_devices(hass: HomeAssistant, target: Any) -> list[str]:
     return resolved
 
 
+
+def _format_state_for_overlay(hass: HomeAssistant, item: Any) -> str:
+    """Format one Home Assistant entity/template descriptor for a display overlay."""
+    if isinstance(item, str):
+        entity_id = item
+        label = ""
+        icon = ""
+    elif isinstance(item, dict):
+        entity_id = str(item.get("entity_id") or item.get("entity") or "").strip()
+        label = str(item.get("label") or item.get("name") or "").strip()
+        icon = str(item.get("icon") or "").strip()
+    else:
+        return ""
+    if not entity_id:
+        return ""
+    state = hass.states.get(entity_id)
+    if state is None:
+        return f"{icon + ' ' if icon else ''}{label or entity_id}: -"
+    unit = ""
+    if isinstance(item, dict):
+        unit = str(item.get("unit") or item.get("unit_of_measurement") or "").strip()
+    if not unit:
+        unit = str(state.attributes.get("unit_of_measurement") or "").strip()
+    shown_label = label or str(state.attributes.get("friendly_name") or entity_id)
+    value = str(state.state)
+    if value in {"unknown", "unavailable", "None"}:
+        value = "-"
+    prefix = f"{icon} " if icon else ""
+    suffix = f" {unit}" if unit and unit not in value else ""
+    return f"{prefix}{shown_label}: {value}{suffix}"
+
+
+def _items_from_payload(payload: dict[str, Any]) -> list[Any]:
+    items = payload.get("items") or payload.get("entities") or payload.get("sensors") or []
+    if isinstance(items, str):
+        return [part.strip() for part in re.split(r"[,\n]", items) if part.strip()]
+    if isinstance(items, list):
+        return items
+    return []
+
+
+def _sensor_overlay_payload(hass: HomeAssistant, payload: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    overlay = str(payload.get("overlay") or payload.get("type") or "ticker").strip().lower()
+    parts = [text for text in (_format_state_for_overlay(hass, item) for item in _items_from_payload(payload)) if text]
+    separator = str(payload.get("separator") or "   •   ")
+    message = str(payload.get("message") or payload.get("text") or separator.join(parts)).strip()
+    out = dict(payload)
+    out.pop("items", None)
+    out.pop("entities", None)
+    out.pop("sensors", None)
+    out["text"] = message
+    out.setdefault("title", payload.get("title") or "Status")
+    out.setdefault("wake_screen", payload.get("wake_screen", True))
+    command = {
+        "ticker": "ticker",
+        "banner": "banner",
+        "alert": "alert",
+        "toast": "toast",
+        "weather": "weather",
+    }.get(overlay, "ticker")
+    return command, out
+
+
+def _augment_weather_payload_from_entity(hass: HomeAssistant, payload: dict[str, Any]) -> dict[str, Any]:
+    if payload.get("text") or payload.get("message"):
+        return payload
+    entity_id = str(payload.get("entity_id") or payload.get("weather_entity") or "").strip()
+    if not entity_id:
+        return payload
+    state = hass.states.get(entity_id)
+    if state is None:
+        return payload
+    attrs = state.attributes
+    temp = attrs.get("temperature")
+    temp_unit = attrs.get("temperature_unit") or hass.config.units.temperature_unit
+    humidity = attrs.get("humidity")
+    wind = attrs.get("wind_speed")
+    wind_unit = attrs.get("wind_speed_unit") or ""
+    condition = state.state
+    lines: list[str] = []
+    if condition and condition not in {"unknown", "unavailable"}:
+        lines.append(str(condition).replace("_", " ").title())
+    if temp is not None:
+        lines.append(f"{temp} {temp_unit}")
+    if humidity is not None:
+        lines.append(f"Feuchte {humidity}%")
+    if wind is not None:
+        lines.append(f"Wind {wind} {wind_unit}".strip())
+    out = dict(payload)
+    out["text"] = "\n".join(lines) if lines else entity_id
+    out.setdefault("title", attrs.get("friendly_name") or "Wetter")
+    return out
+
+
+async def _run_overlay_sequence(hass: HomeAssistant, device_ids: list[str], steps: list[Any]) -> None:
+    """Run a small command sequence. Intended for short copy/paste automations."""
+    for raw_step in steps:
+        if not isinstance(raw_step, dict):
+            continue
+        wait = raw_step.get("wait") or raw_step.get("delay_before")
+        if wait:
+            await asyncio.sleep(max(0, min(float(wait), 300)))
+        service_name = str(raw_step.get("service") or raw_step.get("command") or raw_step.get("type") or "").strip()
+        if not service_name:
+            continue
+        if service_name in {"wait", "delay", "sleep"}:
+            await asyncio.sleep(max(0, min(float(raw_step.get("seconds", raw_step.get("duration", 1))), 300)))
+            continue
+        step_payload = {k: v for k, v in raw_step.items() if k not in {"service", "command", "type", "wait", "delay_before", "delay_after"}}
+        if service_name == "show_sensor_overlay":
+            command, step_payload = _sensor_overlay_payload(hass, step_payload)
+        else:
+            command, step_payload = _service_command(service_name, _clean_payload(step_payload))
+        for device_id in device_ids:
+            await _fire_command(hass, device_id, command, step_payload)
+        delay_after = raw_step.get("delay_after")
+        if delay_after:
+            await asyncio.sleep(max(0, min(float(delay_after), 300)))
+
 def _service_command(service: str, payload: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     if service == "send_command":
         command = str(payload.pop("command", "")).strip()
@@ -510,6 +643,14 @@ def _service_command(service: str, payload: dict[str, Any]) -> tuple[str, dict[s
         return str(payload.pop("message_type", "toast") or "toast"), payload
     if service == "apply_device_profile":
         return "apply_profile", payload
+    if service == "clear_overlays":
+        payload.setdefault("target", "overlays")
+    if service == "clear_banner":
+        payload.setdefault("target", "banner")
+    if service == "clear_weather":
+        payload.setdefault("target", "weather")
+    if service == "clear_camera":
+        payload.setdefault("target", "camera")
 
     mapping = {
         "set_browser_config": "browser_config",
@@ -525,6 +666,8 @@ def _service_command(service: str, payload: dict[str, Any]) -> tuple[str, dict[s
         "show_clock": "clock",
         "show_weather": "weather",
         "show_camera": "camera",
+        "show_status_overlay": "status_overlay",
+        "show_overlay_sequence": "overlay_sequence",
         "clear_alert": "clear_alert",
         "next_screen": "next_screen",
         "previous_screen": "previous_screen",
@@ -532,6 +675,8 @@ def _service_command(service: str, payload: dict[str, Any]) -> tuple[str, dict[s
         "pause_rotation": "pause_rotation",
         "resume_rotation": "resume_rotation",
         "reload_page": "reload_page",
+        "clear_webview_cache": "clear_webview_cache",
+        "clear_overlays": "clear",
         "sync_settings": "sync_settings",
         "recover_dashboard": "recover_dashboard",
         "identify_device": "identify_device",
@@ -601,6 +746,8 @@ def _optimistic_state(hass: HomeAssistant, device_id: str, service: str, payload
         state["preferred_audio_stream"] = payload.get("audio_stream", state.get("preferred_audio_stream"))
         state["tts_volume_percent"] = payload.get("tts_volume", state.get("tts_volume_percent"))
         state["media_volume_percent"] = payload.get("media_volume", state.get("media_volume_percent"))
+    elif service in {"show_status_overlay", "show_overlay_sequence", "show_sensor_overlay"}:
+        state["last_status"] = "overlay_requested"
     elif service == "set_dashboard_language":
         lang = payload.get("dashboard_language", payload.get("language"))
         if lang:
@@ -673,6 +820,19 @@ async def _handle_named_service(hass: HomeAssistant, call: ServiceCall) -> None:
             "opacity": payload.get("opacity", 100),
         }
 
+    if service == "show_weather":
+        payload = _enrich_weather_payload(hass, payload)
+    elif service == "show_sensor_overlay":
+        command, payload = _sensor_overlay_payload(hass, payload)
+        for device_id in targets:
+            _optimistic_state(hass, device_id, service, payload)
+            await _fire_command(hass, device_id, command, payload)
+        return
+    elif service == "show_status_overlay":
+        payload = _build_status_overlay_payload(hass, payload)
+    elif service == "show_overlay_sequence":
+        payload = _build_overlay_sequence_payload(hass, payload)
+
     command, payload = _service_command(service, payload)
     if command == "apply_profile":
         for device_id in targets:
@@ -682,6 +842,135 @@ async def _handle_named_service(hass: HomeAssistant, call: ServiceCall) -> None:
     for device_id in targets:
         _optimistic_state(hass, device_id, service, payload)
         await _fire_command(hass, device_id, command, payload)
+
+
+
+def _entity_summary(hass: HomeAssistant, entity_id: str) -> str:
+    entity_id = str(entity_id or "").strip()
+    if not entity_id:
+        return ""
+    state = hass.states.get(entity_id)
+    if state is None:
+        return entity_id
+    name = state.attributes.get("friendly_name") or entity_id
+    value = state.state
+    unit = state.attributes.get("unit_of_measurement") or ""
+    if unit and not str(value).endswith(str(unit)):
+        value = f"{value} {unit}"
+    return f"{name}: {value}"
+
+
+def _entity_name(hass: HomeAssistant, entity_id: str, fallback: str = "") -> str:
+    state = hass.states.get(str(entity_id or "").strip())
+    if state is None:
+        return fallback or str(entity_id or "")
+    return str(state.attributes.get("friendly_name") or fallback or entity_id)
+
+
+def _enrich_weather_payload(hass: HomeAssistant, payload: dict[str, Any]) -> dict[str, Any]:
+    payload = dict(payload)
+    entity_id = str(payload.get("entity_id") or "").strip()
+    if not entity_id or payload.get("text") or payload.get("message"):
+        return payload
+    state = hass.states.get(entity_id)
+    if state is None:
+        return payload
+    attrs = state.attributes
+    title = payload.get("title") or attrs.get("friendly_name") or "Wetter"
+    parts: list[str] = []
+    condition = str(state.state or "")
+    if condition and condition not in {"unknown", "unavailable"}:
+        parts.append(condition)
+    temp = attrs.get("temperature")
+    unit = attrs.get("temperature_unit") or "°C"
+    if temp is not None:
+        parts.append(f"{temp}{unit}")
+    humidity = attrs.get("humidity")
+    if humidity is not None:
+        parts.append(f"Feuchte {humidity}%")
+    wind = attrs.get("wind_speed")
+    wind_unit = attrs.get("wind_speed_unit") or ""
+    if wind is not None:
+        parts.append(f"Wind {wind}{wind_unit}")
+    pressure = attrs.get("pressure")
+    pressure_unit = attrs.get("pressure_unit") or "hPa"
+    if pressure is not None and payload.get("show_pressure"):
+        parts.append(f"Druck {pressure}{pressure_unit}")
+    forecast = attrs.get("forecast")
+    if isinstance(forecast, list) and forecast and payload.get("show_forecast"):
+        first = forecast[0] if isinstance(forecast[0], dict) else {}
+        f_temp = first.get("temperature")
+        f_cond = first.get("condition")
+        if f_temp is not None or f_cond:
+            parts.append(f"Vorhersage {f_cond or ''} {f_temp if f_temp is not None else ''}{unit}".strip())
+    payload["title"] = title
+    payload["text"] = " · ".join(parts) if parts else _entity_summary(hass, entity_id)
+    payload.setdefault("icon", "🌦️")
+    return payload
+
+
+def _build_status_overlay_payload(hass: HomeAssistant, payload: dict[str, Any]) -> dict[str, Any]:
+    payload = dict(payload)
+    rows = payload.get("rows")
+    if not isinstance(rows, list):
+        rows = []
+    entities = payload.get("entities") or payload.get("entity_ids") or []
+    if isinstance(entities, str):
+        entities = [line.strip() for line in re.split(r"[,\n]", entities) if line.strip()]
+    if isinstance(entities, list):
+        for entity_id in entities:
+            if isinstance(entity_id, dict):
+                eid = str(entity_id.get("entity") or entity_id.get("entity_id") or "").strip()
+                label = str(entity_id.get("name") or _entity_name(hass, eid, eid)).strip()
+                summary = _entity_summary(hass, eid)
+                value = summary.split(": ", 1)[1] if ": " in summary else summary
+                rows.append({"label": label, "value": value, "icon": entity_id.get("icon", "")})
+            else:
+                summary = _entity_summary(hass, str(entity_id))
+                if summary:
+                    if ": " in summary:
+                        label, value = summary.split(": ", 1)
+                        rows.append({"label": label, "value": value})
+                    else:
+                        rows.append({"label": str(entity_id), "value": summary})
+    payload["rows"] = rows
+    if not payload.get("message") and not payload.get("text"):
+        lines = []
+        for row in rows:
+            if isinstance(row, dict):
+                icon = f"{row.get('icon')} " if row.get("icon") else ""
+                lines.append(f"{icon}{row.get('label', '')}: {row.get('value', '')}".strip())
+            else:
+                lines.append(str(row))
+        payload["message"] = "\n".join(lines)
+    payload.setdefault("title", "Status")
+    payload.setdefault("mode", "panel")
+    payload.setdefault("position", "center")
+    return payload
+
+
+def _build_overlay_sequence_payload(hass: HomeAssistant, payload: dict[str, Any]) -> dict[str, Any]:
+    payload = dict(payload)
+    steps = payload.get("steps") or payload.get("sequence") or []
+    if not isinstance(steps, list):
+        steps = []
+    normalized = []
+    default_duration = int(payload.get("default_duration", payload.get("duration", 8)) or 8)
+    for step in steps:
+        if not isinstance(step, dict):
+            step = {"type": "banner", "message": str(step)}
+        step = dict(step)
+        step.setdefault("duration", default_duration)
+        if step.get("type") == "weather":
+            step = _enrich_weather_payload(hass, step)
+        elif step.get("type") in {"status", "status_overlay"}:
+            step = _build_status_overlay_payload(hass, step)
+            step["type"] = "status_overlay"
+        normalized.append(step)
+    payload["steps"] = normalized
+    payload.setdefault("repeat", 1)
+    payload.setdefault("gap", 1)
+    return payload
 
 
 async def _apply_profile(hass: HomeAssistant, device_id: str) -> None:
@@ -761,6 +1050,9 @@ async def _apply_profile(hass: HomeAssistant, device_id: str) -> None:
                 "position": overlays.get("ticker_position", "bottom"),
                 "height": overlays.get("ticker_height", 36),
                 "auto_hide_seconds": overlays.get("ticker_auto_hide_seconds", 15),
+                "color": overlays.get("ticker_color", "#111827"),
+                "text_color": overlays.get("ticker_text_color", "#ffffff"),
+                "text_size": overlays.get("ticker_text_size", 16),
             },
         )
         if overlays.get("ticker"):
@@ -774,6 +1066,9 @@ async def _apply_profile(hass: HomeAssistant, device_id: str) -> None:
                     "title": overlays.get("banner_title", "Info"),
                     "message": overlays.get("banner_message") or overlays.get("banner"),
                     "color": overlays.get("banner_color", "#2196F3"),
+                    "text_color": overlays.get("banner_text_color", "#ffffff"),
+                    "position": overlays.get("banner_position", "top"),
+                    "text_size": overlays.get("banner_text_size", 18),
                     "duration": 8,
                 },
             )
@@ -797,6 +1092,13 @@ async def _apply_profile(hass: HomeAssistant, device_id: str) -> None:
                     "entity_id": overlays.get("weather_entity", ""),
                     "text": overlays.get("weather", ""),
                     "position": overlays.get("weather_position", "top-left"),
+                    "layout": overlays.get("weather_layout", "compact"),
+                    "duration": overlays.get("weather_duration", 45),
+                    "width": overlays.get("weather_width", 280),
+                    "height": overlays.get("weather_height", 74),
+                    "text_size": overlays.get("weather_text_size", 16),
+                    "show_forecast": overlays.get("weather_show_forecast", False),
+                    "show_pressure": overlays.get("weather_show_pressure", False),
                     "visible": True,
                 },
             )
@@ -809,6 +1111,10 @@ async def _apply_profile(hass: HomeAssistant, device_id: str) -> None:
                     "entity_id": overlays.get("camera_entity", ""),
                     "url": overlays.get("camera_url") or overlays.get("camera", ""),
                     "position": overlays.get("camera_position", "fullscreen"),
+                    "duration": overlays.get("camera_duration", 30),
+                    "refresh_seconds": overlays.get("camera_refresh_seconds", 10),
+                    "width": overlays.get("camera_width", 360),
+                    "height": overlays.get("camera_height", 220),
                     "visible": True,
                 },
             )
@@ -1267,6 +1573,12 @@ class KioskCommandView(HomeAssistantView):
             payload = data.get("payload") or {}
             if not isinstance(payload, dict):
                 return self.json({"error": "payload must be an object"}, status_code=400)
+            if command in {"weather", "show_weather"}:
+                payload = _enrich_weather_payload(hass, payload)
+            elif command in {"status_overlay", "show_status_overlay"}:
+                payload = _build_status_overlay_payload(hass, payload)
+            elif command in {"overlay_sequence", "show_overlay_sequence"}:
+                payload = _build_overlay_sequence_payload(hass, payload)
             sent = await _fire_command(hass, device_id, command, payload)
             return self.json({"ok": True, "sent": sent})
         except vol.Invalid as err:

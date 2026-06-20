@@ -1,0 +1,134 @@
+# HA Android Kiosk - Automation Lab examples
+# Replace device and entity_id values with your own.
+
+# 1) Display change by time
+automation:
+  - alias: Kiosk - Display je nach Tageszeit wechseln
+    mode: restart
+    trigger:
+      - platform: time
+        at: "06:30:00"
+      - platform: time
+        at: "22:30:00"
+    action:
+      - choose:
+          - conditions: "{{ now().hour >= 22 or now().hour < 6 }}"
+            sequence:
+              - service: ha_android_kiosk.goto_screen
+                data:
+                  device: bad_tablet
+                  page_id: /lovelace/nacht
+              - service: ha_android_kiosk.set_brightness
+                data:
+                  device: bad_tablet
+                  value: 20
+        default:
+          - service: ha_android_kiosk.goto_screen
+            data:
+              device: bad_tablet
+              page_id: /lovelace/home
+          - service: ha_android_kiosk.set_brightness
+            data:
+              device: bad_tablet
+              value: 85
+
+  # 2) Ticker from sensors
+  - alias: Kiosk - Sensorwerte als Ticker anzeigen
+    mode: restart
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+    action:
+      - service: ha_android_kiosk.show_sensor_overlay
+        data:
+          device: bad_tablet
+          type: ticker
+          title: Status
+          entities:
+            - sensor.bad_temperatur
+            - sensor.aussentemperatur
+            - sensor.pv_leistung
+            - sensor.strompreis
+          separator: "   •   "
+          position: bottom
+          duration: 300
+          color: "#111827"
+          text_color: "#ffffff"
+
+  # 3) Doorbell camera + TTS
+  - alias: Kiosk - Türklingel mit Kamera
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.haustuer_klingel
+        to: "on"
+    action:
+      - service: ha_android_kiosk.goto_screen
+        data:
+          device: bad_tablet
+          page_id: /lovelace/kamera
+      - service: ha_android_kiosk.show_camera
+        data:
+          device: bad_tablet
+          entity_id: camera.haustuer
+          title: Haustür
+          mode: snapshot
+          position: bottom-right
+          width: 420
+          height: 260
+          duration: 45
+          refresh_seconds: 5
+          wake_screen: true
+      - service: ha_android_kiosk.tts_speak
+        data:
+          device: bad_tablet
+          message: Jemand steht vor der Haustür.
+          language: de-DE
+          volume: 100
+          stream: alarm
+          force_max_volume: true
+
+  # 4) Washing machine done
+  - alias: Kiosk - Waschmaschine fertig melden
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.waschmaschine_status
+        to: fertig
+    action:
+      - service: ha_android_kiosk.show_banner
+        data:
+          device: bad_tablet
+          title: Waschmaschine
+          message: Die Wäsche ist fertig
+          position: top
+          color: "#15803d"
+          text_color: "#ffffff"
+          duration: 20
+          wake_screen: true
+      - service: ha_android_kiosk.tts_speak
+        data:
+          device: bad_tablet
+          message: Die Waschmaschine ist fertig.
+          language: de-DE
+          volume: 100
+          stream: alarm
+          force_max_volume: true
+
+  # 5) Clear overlays at night
+  - alias: Kiosk - Overlays schließen
+    mode: single
+    trigger:
+      - platform: time
+        at: "23:00:00"
+    action:
+      - service: ha_android_kiosk.clear_overlays
+        data:
+          device: bad_tablet
+      - service: ha_android_kiosk.stop_media
+        data:
+          device: bad_tablet
+      - service: ha_android_kiosk.goto_screen
+        data:
+          device: bad_tablet
+          page_id: /lovelace/nacht

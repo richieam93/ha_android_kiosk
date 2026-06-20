@@ -1,0 +1,31 @@
+alias: Kiosk - Türklingel mit Kamera
+mode: restart
+trigger:
+  - platform: state
+    entity_id: binary_sensor.haustuer_klingel
+    to: "on"
+action:
+  - service: ha_android_kiosk.goto_screen
+    data:
+      device: bad_tablet
+      screen_id: /lovelace/kameras
+  - service: ha_android_kiosk.show_alert
+    data:
+      device: bad_tablet
+      title: "Türklingel"
+      message: "Jemand steht vor der Haustür"
+      severity: warning
+      mode: banner
+      duration: 8
+      wake_screen: true
+      sound: doorbell
+      volume: 100
+  - service: ha_android_kiosk.show_camera
+    data:
+      device: bad_tablet
+      entity_id: camera.haustuer
+      position: bottom-right
+      width: 420
+      height: 260
+      duration: 30
+      refresh_seconds: 5

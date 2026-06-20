@@ -1,0 +1,3 @@
+service: ha_android_kiosk.clear_overlays
+data:
+  device: bad_tablet

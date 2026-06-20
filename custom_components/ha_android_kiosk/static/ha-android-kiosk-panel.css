@@ -108,3 +108,18 @@ input:focus, textarea:focus, select:focus {
 @media(max-width:980px){
   .sectionHead, .metricGrid, .richChecks { grid-template-columns:1fr; display:grid; }
 }
+.section hr {
+  border: 0;
+  border-top: 1px solid var(--divider-color);
+  margin: 18px 0;
+}
+textarea[readonly] {
+  white-space: pre;
+  overflow: auto;
+  line-height: 1.35;
+}
+.section .hint code {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--primary-color) 12%, var(--secondary-background-color));
+}

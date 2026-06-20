@@ -1,0 +1,19 @@
+alias: Kiosk - Wetter bei Bewegung anzeigen
+mode: restart
+trigger:
+  - platform: state
+    entity_id: binary_sensor.flur_bewegung
+    to: "on"
+action:
+  - service: ha_android_kiosk.show_weather
+    data:
+      device: bad_tablet
+      entity_id: weather.home
+      title: "Wetter"
+      layout: full
+      position: top-left
+      duration: 45
+      refresh_seconds: 300
+      show_forecast: true
+      show_pressure: true
+      wake_screen: true

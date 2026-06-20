@@ -1,0 +1,20 @@
+service: ha_android_kiosk.set_pages
+data:
+  device: bad_tablet
+  auto_rotate: true
+  pause_on_touch: true
+  touch_pause: 120
+  duration: 20
+  pages:
+    - name: Start
+      url: /lovelace/start
+      duration: 25
+      zoom_percent: 120
+    - name: Energie
+      url: /lovelace/energie
+      duration: 20
+      zoom_percent: 115
+    - name: Kameras
+      url: /lovelace/kameras
+      duration: 15
+      zoom_percent: 110

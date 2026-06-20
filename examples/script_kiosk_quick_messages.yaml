@@ -1,0 +1,23 @@
+kiosk_gute_nacht:
+  alias: Kiosk - Gute Nacht
+  sequence:
+    - service: ha_android_kiosk.show_overlay_sequence
+      data:
+        device: all
+        default_duration: 7
+        gap: 1
+        steps:
+          - type: banner
+            title: "Gute Nacht"
+            message: "Das Display wechselt in den Nachtmodus."
+            color: "#111827"
+          - type: status_overlay
+            title: "Offene Fenster"
+            entities:
+              - binary_sensor.fenster_bad
+              - binary_sensor.fenster_kueche
+              - binary_sensor.balkontuer
+    - service: ha_android_kiosk.goto_screen
+      data:
+        device: all
+        screen_id: /lovelace/nacht

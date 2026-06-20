@@ -1,0 +1,25 @@
+alias: Kiosk - Ticker mit Hauswerten aktualisieren
+mode: single
+trigger:
+  - platform: time_pattern
+    minutes: "/5"
+action:
+  - service: ha_android_kiosk.show_sensor_overlay
+    data:
+      device: bad_tablet
+      overlay: ticker
+      entities:
+        - entity_id: sensor.wohnzimmer_temperatur
+          label: Wohnzimmer
+          icon: "🌡️"
+        - entity_id: sensor.strompreis
+          label: Strompreis
+          icon: "⚡"
+        - entity_id: sensor.pv_leistung
+          label: PV
+          icon: "☀️"
+      separator: "   •   "
+      position: bottom
+      color: "#111827"
+      text_color: "#ffffff"
+      duration: 0

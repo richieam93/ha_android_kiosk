@@ -1,0 +1,21 @@
+alias: Kiosk - Status bei Bewegung anzeigen
+mode: restart
+trigger:
+  - platform: state
+    entity_id: binary_sensor.flur_bewegung
+    to: "on"
+action:
+  - service: ha_android_kiosk.show_status_overlay
+    data:
+      device: bad_tablet
+      title: "Hausstatus"
+      entities:
+        - sensor.wohnzimmer_temperatur
+        - sensor.bad_temperatur
+        - binary_sensor.fenster_bad
+        - sensor.waschmaschine_status
+      position: center
+      duration: 20
+      color: "#111827"
+      text_color: "#ffffff"
+      wake_screen: true

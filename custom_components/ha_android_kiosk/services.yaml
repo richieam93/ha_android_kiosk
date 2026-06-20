@@ -1,6 +1,7 @@
 set_browser_config:
   name: Set browser config
-  description: Setzt WebView-/Browser-Einstellungen wie Startseite, Vollbild, Display wach halten, Auto-Reload, Dashboard-Sprache, Hintergrund-zuerst-Laden, transparente WebView und User-Agent.
+  description: Setzt WebView-/Browser-Einstellungen wie Startseite, Vollbild, Display wach halten, Auto-Reload, Dashboard-Sprache,
+    Hintergrund-zuerst-Laden, transparente WebView und User-Agent.
   fields:
     device:
       name: Device
@@ -32,11 +33,13 @@ set_browser_config:
       example: 0
     external_auth:
       name: Browser auto login
-      description: Übergibt den App-Login automatisch an das Home-Assistant-Frontend, damit im WebView kein zweiter Login nötig ist.
+      description: Übergibt den App-Login automatisch an das Home-Assistant-Frontend, damit im WebView kein zweiter Login
+        nötig ist.
       example: true
     hide_header:
       name: Hide Home Assistant header
-      description: Blendet die obere Home-Assistant-Leiste, Tabs und die linke Sidebar/Drawer-Navigation im Kiosk-WebView aus.
+      description: Blendet die obere Home-Assistant-Leiste, Tabs und die linke Sidebar/Drawer-Navigation im Kiosk-WebView
+        aus.
       example: true
     wait_for_background:
       name: Background first
@@ -64,20 +67,22 @@ set_browser_config:
       example: de
     settings_sync_seconds:
       name: Self sync interval
-      description: Sekundenintervall, in dem das Tablet gespeicherte Geräte-, Browser-, Rotation- und Hintergrund-Einstellungen selbstständig von Home Assistant abholt. 0 = aus.
+      description: Sekundenintervall, in dem das Tablet gespeicherte Geräte-, Browser-, Rotation- und Hintergrund-Einstellungen
+        selbstständig von Home Assistant abholt. 0 = aus.
       example: 300
     visual_watchdog_seconds:
       name: Visual watchdog
-      description: Sekundenintervall für automatische Anzeige-Reparatur/Reapply von Hintergrund, Navigation und Zoom. 0 = aus.
+      description: Sekundenintervall für automatische Anzeige-Reparatur/Reapply von Hintergrund, Navigation und Zoom. 0 =
+        aus.
       example: 45
     user_agent:
       name: User agent
       description: Optionaler WebView-User-Agent.
-      example: ""
-
+      example: ''
 set_dashboard_language:
   name: Set dashboard language
-  description: Stellt die Dashboard-Sprache im Android-WebView auf Deutsch oder Englisch um. Die App schreibt die Sprache in den WebView, setzt Accept-Language und lädt Home Assistant bei Bedarf einmal neu.
+  description: Stellt die Dashboard-Sprache im Android-WebView auf Deutsch oder Englisch um. Die App schreibt die Sprache
+    in den WebView, setzt Accept-Language und lädt Home Assistant bei Bedarf einmal neu.
   fields:
     device:
       name: Device
@@ -85,13 +90,12 @@ set_dashboard_language:
       example: all
     dashboard_language:
       name: Dashboard language
-      description: "de für Deutsch oder en für Englisch. Alias: language."
+      description: 'de für Deutsch oder en für Englisch. Alias: language.'
       example: en
     language:
       name: Language
       description: Optionaler Alias für dashboard_language.
       example: en
-
 open_url:
   name: Open URL
   description: Öffnet eine Dashboard-Seite oder beliebige URL im Android-Kiosk-WebView.
@@ -108,7 +112,6 @@ open_url:
       name: Page zoom percent
       description: Optionale Größe nur für diese geöffnete Seite. Leer/0 verwendet den Standard oder die Seitenregel.
       example: 125
-
 set_pages:
   name: Set pages
   description: Sendet Seitenliste und Rotationseinstellungen an ein oder mehrere Android-Kiosk-Geräte.
@@ -137,10 +140,10 @@ set_pages:
       name: Touch pause seconds
       description: Pausendauer nach Touch in Sekunden.
       example: 60
-
 send_ticker_message:
   name: Send ticker message
-  description: Sendet eine oder mehrere Live-Meldungen an die Ticker-Leiste.
+  description: Sendet eine oder mehrere Live-Meldungen an die Ticker-Leiste. Unterstützt Icons, Farben, Textgröße, Position
+    und automatische Ausblendung.
   fields:
     device:
       name: Device
@@ -157,11 +160,11 @@ send_ticker_message:
     color:
       name: Color
       description: Optionale Farbe für die Einzelmeldung.
-      example: "#9ca3af"
+      example: '#9ca3af'
     icon:
       name: Icon
       description: Optionales Emoji/Icon vor der Meldung.
-      example: "📢"
+      example: 📢
     replace:
       name: Replace
       description: Vorherige Live-Meldungen ersetzen.
@@ -170,7 +173,34 @@ send_ticker_message:
       name: Duration
       description: Sichtbarkeit der Live-Meldung in Sekunden.
       example: 15
-
+    text_color:
+      name: Text color
+      description: Textfarbe als Hex-Wert.
+      example: '#ffffff'
+    text_size:
+      name: Text size
+      description: Textgröße in sp.
+      example: 18
+    separator:
+      name: Separator
+      description: Trenner zwischen mehreren Meldungen.
+      example: '   •   '
+    position:
+      name: Position
+      description: top oder bottom.
+      example: bottom
+    height:
+      name: Height
+      description: Höhe in dp.
+      example: 42
+    font_size:
+      name: Font size
+      description: Alias für text_size. Textgröße in sp.
+      example: 18
+    width:
+      name: Width
+      description: Optional; normalerweise volle Breite.
+      example: -1
 clear_ticker:
   name: Clear ticker
   description: Löscht die aktuelle Live-Ticker-Meldung und zeigt wieder die feste Tickerliste.
@@ -179,7 +209,6 @@ clear_ticker:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 update_ticker_config:
   name: Update ticker config
   description: Aktualisiert Ticker-Einstellungen wie feste Meldungen, Höhe, Position oder Aktivierung.
@@ -212,7 +241,26 @@ update_ticker_config:
       name: Auto hide
       description: Nach wie vielen Sekunden Live-Meldungen verschwinden.
       example: 15
-
+    text_size:
+      name: Text size
+      description: Textgröße in sp.
+      example: 18
+    color:
+      name: Background color
+      description: Hintergrundfarbe als Hex-Wert.
+      example: '#111827'
+    text_color:
+      name: Text color
+      description: Textfarbe als Hex-Wert.
+      example: '#ffffff'
+    separator:
+      name: Separator
+      description: Trennzeichen zwischen festen Meldungen.
+      example: '   •   '
+    font_size:
+      name: Font size
+      description: Alias für text_size. Textgröße in sp.
+      example: 16
 show_toast:
   name: Show toast
   description: Zeigt einen kleinen Toast-Hinweis auf einem oder mehreren Geräten.
@@ -236,7 +284,7 @@ show_toast:
     color:
       name: Color
       description: Hintergrundfarbe.
-      example: "#111827"
+      example: '#111827'
     position:
       name: Position
       description: bottom, top oder center.
@@ -245,10 +293,10 @@ show_toast:
       name: Wake screen
       description: Display für den Toast aufwecken.
       example: true
-
 show_banner:
   name: Show banner
-  description: Zeigt ein Banner oben auf dem Display.
+  description: Zeigt ein Banner auf dem Display. Position, Farbe, Textgröße, Sound, Vibration und TTS können pro Meldung gesetzt
+    werden.
   fields:
     device:
       name: Device
@@ -265,7 +313,7 @@ show_banner:
     color:
       name: Color
       description: Bannerfarbe.
-      example: "#2196F3"
+      example: '#2196F3'
     duration:
       name: Duration
       description: Anzeigedauer in Sekunden.
@@ -274,10 +322,46 @@ show_banner:
       name: Wake screen
       description: Display für das Banner aufwecken.
       example: true
-
+    position:
+      name: Position
+      description: top, bottom oder center.
+      example: top
+    text_color:
+      name: Text color
+      description: Textfarbe als Hex-Wert.
+      example: '#ffffff'
+    text_size:
+      name: Text size
+      description: Textgröße in sp.
+      example: 20
+    sound_url:
+      name: Sound URL
+      description: Optionaler Ton zur Meldung.
+      example: /media/local/notification.mp3
+    vibrate:
+      name: Vibrate
+      description: Zusätzlich vibrieren.
+      example: false
+    tts_message:
+      name: TTS message
+      description: Optional gleichzeitig sprechen.
+      example: Neue Meldung auf dem Display.
+    height:
+      name: Height
+      description: Banner-Höhe in dp.
+      example: 58
+    font_size:
+      name: Font size
+      description: Alias für text_size. Textgröße in sp.
+      example: 20
+    stream:
+      name: Audio stream
+      description: 'Android-Audiokanal für Sound/TTS: music, alarm, notification oder ring.'
+      example: alarm
 show_alert:
   name: Show alert
-  description: Zeigt einen Alert als Vollbild, Banner oder Toast.
+  description: Zeigt einen Alert als Vollbild, Panel, Banner oder Toast. Unterstützt Farben, TTS, Sound, Vibration und optional
+    vorbereitete Button-Daten.
   fields:
     device:
       name: Device
@@ -297,12 +381,12 @@ show_alert:
       example: warning
     mode:
       name: Mode
-      description: fullscreen, banner oder toast.
+      description: fullscreen, panel, banner oder toast.
       example: fullscreen
     color:
       name: Color
       description: Akzent-/Hintergrundfarbe als Hex-Wert.
-      example: "#ff9800"
+      example: '#ff9800'
     duration:
       name: Duration
       description: Dauer in Sekunden. 0 = manuell schließen.
@@ -351,7 +435,34 @@ show_alert:
       name: TTS engine
       description: Optionale HA-TTS-Engine.
       example: google_translate
-
+    text_size:
+      name: Text size
+      description: Textgröße in sp.
+      example: 28
+    position:
+      name: Position
+      description: fullscreen, center, top, bottom oder eine Ecke.
+      example: center
+    text_color:
+      name: Text color
+      description: Textfarbe als Hex-Wert.
+      example: '#ffffff'
+    font_size:
+      name: Font size
+      description: Alias für text_size. Textgröße in sp.
+      example: 28
+    width:
+      name: Width
+      description: 'Breite in dp bei mode: panel.'
+      example: 380
+    height:
+      name: Height
+      description: 'Höhe in dp bei mode: panel.'
+      example: 240
+    stream:
+      name: Audio stream
+      description: 'Android-Audiokanal für Sound/TTS: music, alarm, notification oder ring.'
+      example: alarm
 show_clock:
   name: Show clock
   description: Zeigt die Uhr als Kiosk-Overlay. Ohne Felder werden die Standardwerte aus der Admin-Seite des Geräts verwendet.
@@ -392,10 +503,10 @@ show_clock:
       name: Wake screen
       description: Display einschalten bevor die Uhr angezeigt wird.
       example: true
-
 show_weather:
   name: Show weather
-  description: Zeigt eine Wetterkarte als Kiosk-Overlay. Die Wetter-Entity kann in der Admin-Seite pro Gerät vordefiniert werden.
+  description: Zeigt eine Wetterkarte als Kiosk-Overlay. Wenn nur entity_id angegeben wird, liest die Integration Zustand,
+    Temperatur, Luftfeuchtigkeit und Wind direkt aus Home Assistant.
   fields:
     device:
       name: Device
@@ -425,14 +536,50 @@ show_weather:
       name: Refresh seconds
       description: Aktualisierungsintervall während die Karte sichtbar ist.
       example: 300
+    show_forecast:
+      name: Show forecast
+      description: Erste Forecast-Zeile aus der Wetter-Entity ergänzen, wenn vorhanden.
+      example: true
+    show_pressure:
+      name: Show pressure
+      description: Luftdruck ergänzen, wenn vorhanden.
+      example: false
+    color:
+      name: Color
+      description: Hintergrundfarbe.
+      example: '#0f172a'
+    text_color:
+      name: Text color
+      description: Textfarbe.
+      example: '#ffffff'
+    text_size:
+      name: Text size
+      description: Textgröße in sp.
+      example: 16
     wake_screen:
       name: Wake screen
       description: Display einschalten bevor Wetter angezeigt wird.
       example: true
-
+    text:
+      name: Text
+      description: Optionaler Text. Wenn leer, baut die Integration den Text aus entity_id.
+      example: Sonnig · 22°C · Feuchte 50%
+    width:
+      name: Width
+      description: Overlay-Breite in dp.
+      example: 260
+    height:
+      name: Height
+      description: Overlay-Höhe in dp.
+      example: 86
+    font_size:
+      name: Font size
+      description: Alias für text_size. Textgröße in sp.
+      example: 16
 show_camera:
   name: Show camera
-  description: Zeigt eine Kamera als Kiosk-Overlay oder Vollbild. Die Kamera-Entity kann in der Admin-Seite pro Gerät vordefiniert werden.
+  description: Zeigt eine Kamera als Kiosk-Overlay oder Vollbild. Unterstützt Position, Größe, Dauer und periodisches Neuladen
+    von Snapshot/Proxy-Bildern.
   fields:
     device:
       name: Device
@@ -462,11 +609,174 @@ show_camera:
       name: Refresh seconds
       description: Bild-Aktualisierung in Sekunden bei Snapshot/Proxy.
       example: 10
+    width:
+      name: Width
+      description: Overlay-Breite in dp.
+      example: 360
+    height:
+      name: Height
+      description: Overlay-Höhe in dp.
+      example: 220
+    color:
+      name: Border/background color
+      description: Hintergrund- oder Rahmenfarbe.
+      example: '#000000'
     wake_screen:
       name: Wake screen
       description: Display einschalten bevor die Kamera angezeigt wird.
       example: true
-
+    url:
+      name: URL
+      description: Direkte Kamera- oder Bild-URL. Leer = aus entity_id wird /api/camera_proxy/... erzeugt.
+      example: /api/camera_proxy/camera.haustuer
+    text_color:
+      name: Text color
+      description: Titelfarbe.
+      example: '#ffffff'
+show_sensor_overlay:
+  name: Show sensor overlay
+  description: Erstellt aus Home-Assistant-Sensoren automatisch eine Ticker-, Banner-, Toast-, Wetter- oder Alert-Meldung.
+    Sehr praktisch für kopierfertige YAML-Automationen.
+  fields:
+    device:
+      name: Device
+      description: Geräte-ID, Gerätename, Liste oder "all".
+      example: all
+    overlay:
+      name: Overlay
+      description: ticker, banner, alert, toast oder weather.
+      example: ticker
+    title:
+      name: Title
+      description: Titel für Banner/Alert/Weather.
+      example: Hausstatus
+    entities:
+      name: Entities
+      description: Liste von Entity-IDs oder Objekten mit entity_id, label und icon.
+      example: '["sensor.wohnzimmer_temperatur",{"entity_id":"binary_sensor.fenster_bad","label":"Badfenster","icon":"🪟"}]'
+    items:
+      name: Items
+      description: Alias für entities.
+      example: '[{"entity_id":"sensor.strompreis","label":"Strompreis","icon":"⚡"}]'
+    separator:
+      name: Separator
+      description: Trenner zwischen Sensorwerten im Ticker.
+      example: '   •   '
+    duration:
+      name: Duration
+      description: Anzeigedauer in Sekunden.
+      example: 20
+    position:
+      name: Position
+      description: Overlay-Position.
+      example: bottom
+    color:
+      name: Color
+      description: Hintergrundfarbe.
+      example: '#111827'
+    text_color:
+      name: Text color
+      description: Textfarbe.
+      example: '#ffffff'
+    wake_screen:
+      name: Wake screen
+      description: Display einschalten bevor das Overlay angezeigt wird.
+      example: true
+show_status_overlay:
+  name: Show status overlay
+  description: Erstellt ein Status-Overlay aus Home-Assistant-Entities. Ideal für Temperatur, Fenster, Türen, Energie, Waschmaschine
+    oder frei gewählte Sensoren.
+  fields:
+    device:
+      name: Device
+      description: Geräte-ID, Gerätename, Liste oder "all".
+      example: all
+    title:
+      name: Title
+      description: Titel des Status-Overlays.
+      example: Hausstatus
+    entities:
+      name: Entities
+      description: Liste von Entity-IDs oder Objekten mit entity/name/icon.
+      example: '["sensor.wohnzimmer_temperatur","binary_sensor.fenster_bad"]'
+    rows:
+      name: Rows
+      description: Feste Zeilen, falls du keine Entity-IDs verwenden willst.
+      example: '[{"label":"Waschmaschine","value":"Fertig","icon":"🧺"}]'
+    mode:
+      name: Mode
+      description: panel, fullscreen oder banner.
+      example: panel
+    position:
+      name: Position
+      description: center, fullscreen, top-left, top-right, bottom-left oder bottom-right.
+      example: center
+    duration:
+      name: Duration
+      description: Anzeigedauer in Sekunden. 0 = bleibt bis clear_overlays.
+      example: 20
+    color:
+      name: Color
+      description: Hintergrundfarbe.
+      example: '#111827'
+    text_color:
+      name: Text color
+      description: Textfarbe.
+      example: '#ffffff'
+    wake_screen:
+      name: Wake screen
+      description: Display einschalten bevor das Overlay angezeigt wird.
+      example: true
+    width:
+      name: Width
+      description: 'Breite in dp bei mode: panel.'
+      example: 380
+    height:
+      name: Height
+      description: 'Höhe in dp bei mode: panel.'
+      example: 240
+    font_size:
+      name: Font size
+      description: Textgröße in sp.
+      example: 20
+show_overlay_sequence:
+  name: Show overlay sequence
+  description: Zeigt mehrere Overlay-Schritte nacheinander, z. B. Seite wechseln, Banner anzeigen, Wetter anzeigen, Kamera
+    anzeigen und danach wieder schließen.
+  fields:
+    device:
+      name: Device
+      description: Geräte-ID, Gerätename, Liste oder "all".
+      example: all
+    steps:
+      name: Steps
+      description: Liste von Overlay-Schritten. Jeder Schritt kann type, title, message, duration, entity_id, position usw.
+        enthalten.
+      example: '[{"type":"banner","message":"Guten Morgen","duration":5},{"type":"weather","entity_id":"weather.home","duration":10}]'
+    default_duration:
+      name: Default duration
+      description: Standarddauer je Schritt, falls im Schritt keine duration steht.
+      example: 8
+    gap:
+      name: Gap
+      description: Pause zwischen Schritten in Sekunden.
+      example: 1
+    repeat:
+      name: Repeat
+      description: Anzahl Durchläufe.
+      example: 1
+    wake_screen:
+      name: Wake screen
+      description: Display vor der Sequenz einschalten.
+      example: true
+    clear_between:
+      name: Clear between
+      description: Vor jedem Schritt vorherige Overlays ausblenden.
+      example: true
+    clear_after:
+      name: Clear after
+      description: Am Ende alle Overlays ausblenden.
+      example: true
 clear_alert:
   name: Clear alert
   description: Schließt aktive Toasts, Banner und Alerts auf einem oder mehreren Geräten.
@@ -475,7 +785,30 @@ clear_alert:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
+clear_banner:
+  name: Clear banner
+  description: Schließt nur das Banner-Overlay.
+  fields:
+    device:
+      name: Device
+      description: Geräte-ID, Gerätename, Liste oder "all".
+      example: all
+clear_weather:
+  name: Clear weather overlay
+  description: Schließt nur das Wetter-Overlay.
+  fields:
+    device:
+      name: Device
+      description: Geräte-ID, Gerätename, Liste oder "all".
+      example: all
+clear_camera:
+  name: Clear camera overlay
+  description: Schließt nur das Kamera-Overlay.
+  fields:
+    device:
+      name: Device
+      description: Geräte-ID, Gerätename, Liste oder "all".
+      example: all
 next_screen:
   name: Next screen
   description: Wechselt zur nächsten Kiosk-Seite.
@@ -484,7 +817,6 @@ next_screen:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 previous_screen:
   name: Previous screen
   description: Wechselt zur vorherigen Kiosk-Seite.
@@ -493,7 +825,6 @@ previous_screen:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 goto_screen:
   name: Go to screen
   description: Springt zu einer Kiosk-Seite anhand von ID, Name oder page_id.
@@ -510,7 +841,6 @@ goto_screen:
       name: Page ID
       description: Alias für screen_id.
       example: page_1
-
 pause_rotation:
   name: Pause rotation
   description: Pausiert die automatische Kiosk-Rotation.
@@ -523,7 +853,6 @@ pause_rotation:
       name: Duration
       description: Optionale Dauer in Sekunden.
       example: 300
-
 resume_rotation:
   name: Resume rotation
   description: Setzt die automatische Kiosk-Rotation fort.
@@ -532,7 +861,6 @@ resume_rotation:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 reload_page:
   name: Reload page
   description: Lädt die Display-Seite neu.
@@ -541,7 +869,23 @@ reload_page:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
+clear_webview_cache:
+  name: Clear WebView cache
+  description: Leert Cache, Verlauf, Formulardaten, Cookies und WebStorage der Android-WebView und lädt die aktuelle Seite
+    danach neu.
+  fields:
+    device:
+      name: Device
+      description: Geräte-ID, Gerätename, Liste oder "all".
+      example: all
+clear_overlays:
+  name: Clear overlays
+  description: Blendet Ticker, Banner, Alert, Wetter- und Kamera-Overlays auf dem Android-Gerät aus.
+  fields:
+    device:
+      name: Device
+      description: Geräte-ID, Gerätename, Liste oder "all".
+      example: all
 identify_device:
   name: Identify device
   description: Zeigt eine kurze Markierung auf dem Gerät.
@@ -550,7 +894,6 @@ identify_device:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 set_screen_power:
   name: Set screen power
   description: Schaltet den Bildschirm ein oder aus.
@@ -563,7 +906,6 @@ set_screen_power:
       name: Power
       description: true = an, false = aus.
       example: true
-
 set_brightness:
   name: Set brightness
   description: Setzt die Display-Helligkeit in Prozent.
@@ -576,7 +918,6 @@ set_brightness:
       name: Brightness
       description: Helligkeit von 0 bis 100.
       example: 80
-
 set_volume:
   name: Set volume
   description: Setzt die Android-/Medienlautstärke in Prozent.
@@ -589,7 +930,6 @@ set_volume:
       name: Volume
       description: Lautstärke von 0 bis 100.
       example: 50
-
 set_screen_orientation:
   name: Set orientation
   description: Setzt die Bildschirmausrichtung.
@@ -602,10 +942,10 @@ set_screen_orientation:
       name: Orientation
       description: 0, 90, 180 oder 270.
       example: 0
-
 set_device_setting:
   name: Set device setting
-  description: Setzt eine native Android-Gerätefunktion, z. B. motion_detection, keep_screen_on, hide_header, wait_for_background, transparent_webview, light_sensor oder camera_motion_detection.
+  description: Setzt eine native Android-Gerätefunktion, z. B. motion_detection, keep_screen_on, hide_header, wait_for_background,
+    transparent_webview, light_sensor oder camera_motion_detection.
   fields:
     device:
       name: Device
@@ -619,7 +959,6 @@ set_device_setting:
       name: Value
       description: Neuer Wert, z. B. true, false, 75 oder 30.
       example: true
-
 restart_app:
   name: Restart app
   description: Startet die Android-App auf einem oder mehreren Geräten neu.
@@ -628,7 +967,6 @@ restart_app:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 open_android_settings:
   name: Open Android settings
   description: Öffnet die Android-App-Detailseite auf dem Gerät.
@@ -637,7 +975,6 @@ open_android_settings:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 vibrate_device:
   name: Vibrate device
   description: Lässt das Smartphone kurz vibrieren.
@@ -650,7 +987,6 @@ vibrate_device:
       name: Duration
       description: Vibrationsdauer in Millisekunden.
       example: 500
-
 report_device_state:
   name: Report device state
   description: Fordert sofort einen neuen Status-/Sensorbericht vom Android-Gerät an.
@@ -659,7 +995,6 @@ report_device_state:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 play_sound:
   name: Play sound
   description: Spielt einen internen Sound oder eine Sound-URL ab.
@@ -684,7 +1019,6 @@ play_sound:
       name: Loop
       description: Sound wiederholen.
       example: false
-
 play_announcement:
   name: Play announcement
   description: Spielt eine kurze Ansage oder Sounddatei ab.
@@ -713,7 +1047,6 @@ play_announcement:
       name: Title
       description: Optionale Bezeichnung der Ansage.
       example: Türgong
-
 tts_speak:
   name: TTS speak
   description: Spricht einen Text auf einem oder mehreren Geräten.
@@ -746,7 +1079,6 @@ tts_speak:
       name: Volume
       description: Lautstärke in Prozent.
       example: 70
-
 stop_audio:
   name: Stop audio
   description: Stoppt laufende Audio-Wiedergabe.
@@ -755,7 +1087,6 @@ stop_audio:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 play_media:
   name: Play media
   description: Spielt eine Mediendatei/Audio-URL ab.
@@ -780,7 +1111,6 @@ play_media:
       name: Loop
       description: true/false.
       example: false
-
 stop_media:
   name: Stop media
   description: Stoppt Medienwiedergabe.
@@ -789,7 +1119,6 @@ stop_media:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 media_pause:
   name: Media pause
   description: Pausiert Medienwiedergabe.
@@ -798,7 +1127,6 @@ media_pause:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 media_resume:
   name: Media resume
   description: Setzt Medienwiedergabe fort.
@@ -807,7 +1135,6 @@ media_resume:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 media_next:
   name: Media next
   description: Nächster Track, falls vom Android-Player unterstützt.
@@ -816,7 +1143,6 @@ media_next:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 media_previous:
   name: Media previous
   description: Vorheriger Track, falls vom Android-Player unterstützt.
@@ -825,10 +1151,10 @@ media_previous:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 send_command:
   name: Send raw kiosk command
-  description: Sendet einen rohen Befehl an ein Gerät. Nur für Debugging oder neue Funktionen, die noch keinen eigenen Service haben.
+  description: Sendet einen rohen Befehl an ein Gerät. Nur für Debugging oder neue Funktionen, die noch keinen eigenen Service
+    haben.
   fields:
     device:
       name: Device
@@ -846,7 +1172,6 @@ send_command:
       name: Payload
       description: JSON/YAML-Payload für den Rohbefehl.
       example: '{"path":"/lovelace/default_view"}'
-
 set_page:
   name: Set page
   description: Alter Alias für goto_screen mit direktem Pfad oder URL.
@@ -863,7 +1188,6 @@ set_page:
       name: Path
       description: Home-Assistant-Pfad oder vollständige URL.
       example: /lovelace/default_view
-
 show_message:
   name: Show message
   description: Alter Alias für Toast/Ticker/Banner/Alert.
@@ -888,7 +1212,6 @@ show_message:
       name: Payload
       description: Zusätzliche Optionen.
       example: '{"duration": 5}'
-
 apply_device_profile:
   name: Apply Android kiosk profile
   description: Wendet das im Webinterface gespeicherte Profil auf ein Android-Kiosk-Gerät an.
@@ -901,7 +1224,6 @@ apply_device_profile:
       name: Device ID
       description: Alter Alias für device.
       example: android_tablet
-
 media_seek:
   name: Media seek
   description: Springt in der aktuellen Medienwiedergabe zu einer Position in Sekunden.
@@ -914,7 +1236,6 @@ media_seek:
       name: Position
       description: Zielposition in Sekunden.
       example: 30
-
 media_mute:
   name: Media mute
   description: Schaltet Medienwiedergabe stumm.
@@ -923,7 +1244,6 @@ media_mute:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 media_unmute:
   name: Media unmute
   description: Hebt Medien-Stummschaltung auf.
@@ -932,7 +1252,6 @@ media_unmute:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 media_loop:
   name: Media loop
   description: Aktiviert oder deaktiviert Wiederholung/Loop für Medien oder Playlists.
@@ -945,7 +1264,6 @@ media_loop:
       name: Loop
       description: true = wiederholen, false = nicht wiederholen.
       example: true
-
 set_media_volume:
   name: Set media volume
   description: Setzt die Medienlautstärke in Prozent.
@@ -958,7 +1276,6 @@ set_media_volume:
       name: Volume
       description: Lautstärke von 0 bis 100.
       example: 70
-
 tts_stop:
   name: Stop TTS
   description: Stoppt laufende Android-TTS-Ausgabe.
@@ -967,26 +1284,24 @@ tts_stop:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
-
 sync_settings:
   name: Sync settings now
-  description: Fordert das Gerät auf, gespeicherte Browser-, Rotations-, Hintergrund- und Geräte-Einstellungen sofort selbständig von Home Assistant abzuholen.
+  description: Fordert das Gerät auf, gespeicherte Browser-, Rotations-, Hintergrund- und Geräte-Einstellungen sofort selbständig
+    von Home Assistant abzuholen.
   fields:
     device:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 recover_dashboard:
   name: Recover dashboard display
-  description: Wendet Hintergrund, transparente WebView, Kiosk-Navigation und Seiten-Zoom erneut an, falls nach Standby/Offline-Zeit eine leere oder verschobene Anzeige sichtbar ist.
+  description: Wendet Hintergrund, transparente WebView, Kiosk-Navigation und Seiten-Zoom erneut an, falls nach Standby/Offline-Zeit
+    eine leere oder verschobene Anzeige sichtbar ist.
   fields:
     device:
       name: Device
       description: Geräte-ID, Gerätename, Liste oder "all".
       example: all
-
 set_audio_config:
   name: Set audio boost config
   description: Konfiguriert Audio-/TTS-Boost, Audiokanal und Audio-Fokus auf dem Android-Gerät.
@@ -1005,7 +1320,7 @@ set_audio_config:
       example: 100
     audio_stream:
       name: Audio stream
-      description: "Android-Audiokanal: music, alarm, notification oder ring."
+      description: 'Android-Audiokanal: music, alarm, notification oder ring.'
       example: alarm
     force_max_volume:
       name: Force max volume
@@ -1015,10 +1330,10 @@ set_audio_config:
       name: Audio focus
       description: Fordert Audio-Fokus vor Medien/TTS an.
       example: true
-
 delete_device:
   name: Delete kiosk device
-  description: Löscht ein Android-Kiosk-Gerät vollständig aus der Integration, inklusive Entity-Registry und Device-Registry dieser Integration.
+  description: Löscht ein Android-Kiosk-Gerät vollständig aus der Integration, inklusive Entity-Registry und Device-Registry
+    dieser Integration.
   fields:
     device:
       name: Device
@@ -1028,7 +1343,6 @@ delete_device:
       name: Remove registry
       description: Entfernt zusätzlich Entity- und Device-Registry-Einträge.
       example: true
-
 cleanup_devices:
   name: Cleanup kiosk devices
   description: Löscht mehrere alte/Test-Geräte aus der Integration, inklusive Registry-Einträgen.
@@ -1036,7 +1350,9 @@ cleanup_devices:
     device:
       name: Devices
       description: Geräte-ID, Gerätename, Liste oder "all".
-      example: [android_test, tester01]
+      example:
+      - android_test
+      - tester01
     remove_registry:
       name: Remove registry
       description: Entfernt zusätzlich Entity- und Device-Registry-Einträge.
@@ -1045,11 +1361,10 @@ cleanup_devices:
       name: Offline only
       description: Löscht bei "all" nur Geräte, die nicht kürzlich online waren.
       example: true
-
-
 set_background_slideshow:
   name: Set background slideshow
-  description: Konfiguriert wechselnde Hintergrundbilder im Android-Kiosk-WebView. Bilder können aus dem Admin-Webinterface hochgeladen oder als URLs angegeben werden.
+  description: Konfiguriert wechselnde Hintergrundbilder im Android-Kiosk-WebView. Bilder können aus dem Admin-Webinterface
+    hochgeladen oder als URLs angegeben werden.
   fields:
     device:
       name: Device
@@ -1087,7 +1402,6 @@ set_background_slideshow:
       name: Opacity
       description: Deckkraft in Prozent.
       example: 100
-
 set_background_album:
   name: Set background album
   description: Verwendet ein komplettes Hintergrund-Album als Slideshow auf einem oder mehreren Geräten.
@@ -1128,7 +1442,6 @@ set_background_album:
       name: Opacity
       description: Deckkraft in Prozent.
       example: 100
-
 set_background_image:
   name: Set background image
   description: Setzt ein einzelnes Hintergrundbild auf einem oder mehreren Geräten.
@@ -1157,7 +1470,6 @@ set_background_image:
       name: Opacity
       description: Deckkraft in Prozent.
       example: 100
-
 clear_background:
   name: Clear background
   description: Entfernt den vom Kiosk gesetzten dynamischen Hintergrund.

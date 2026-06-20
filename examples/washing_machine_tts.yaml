@@ -1,0 +1,21 @@
+alias: Kiosk - Waschmaschine fertig
+mode: single
+trigger:
+  - platform: state
+    entity_id: sensor.waschmaschine_status
+    to: "fertig"
+action:
+  - service: ha_android_kiosk.show_banner
+    data:
+      device: bad_tablet
+      title: "Waschmaschine"
+      message: "Die Wäsche ist fertig"
+      position: top
+      color: "#15803d"
+      text_color: "#ffffff"
+      text_size: 20
+      duration: 15
+      wake_screen: true
+      tts_message: "Die Waschmaschine ist fertig."
+      tts_language: de-DE
+      volume: 100

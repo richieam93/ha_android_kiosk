@@ -1,0 +1,58 @@
+# Copy this file into /config/packages/ha_android_kiosk_examples.yaml
+# Then adjust device IDs and entity IDs.
+# Requires packages to be enabled in configuration.yaml.
+
+automation:
+  - alias: Kiosk - Doorbell camera
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.haustuer_klingel
+        to: "on"
+    action:
+      - service: ha_android_kiosk.goto_screen
+        data:
+          device: bad_tablet
+          screen_id: /lovelace/kamera
+      - service: ha_android_kiosk.show_alert
+        data:
+          device: bad_tablet
+          title: "Türklingel"
+          message: "Jemand steht vor der Haustür"
+          severity: warning
+          mode: banner
+          duration: 8
+          wake_screen: true
+          sound: doorbell
+          volume: 100
+      - service: ha_android_kiosk.show_camera
+        data:
+          device: bad_tablet
+          entity_id: camera.haustuer
+          position: bottom-right
+          width: 420
+          height: 260
+          duration: 30
+          refresh_seconds: 5
+
+  - alias: Kiosk - Show status when motion is detected
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.flur_bewegung
+        to: "on"
+    action:
+      - service: ha_android_kiosk.show_status_overlay
+        data:
+          device: bad_tablet
+          title: "Hausstatus"
+          entities:
+            - sensor.wohnzimmer_temperatur
+            - sensor.bad_temperatur
+            - binary_sensor.fenster_bad
+            - sensor.waschmaschine_status
+          position: center
+          duration: 20
+          color: "#111827"
+          text_color: "#ffffff"
+          wake_screen: true

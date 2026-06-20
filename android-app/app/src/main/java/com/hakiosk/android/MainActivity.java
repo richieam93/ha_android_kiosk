@@ -128,6 +128,18 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
     private String lastNativeBackgroundFailUrl = "";
     private Bitmap nativeBackgroundBitmap;
     private final Random random = new Random();
+    private final Runnable cameraRefreshRunnable = new Runnable() {
+        @Override public void run() {
+            try {
+                if (cameraView != null && cameraView.getVisibility() == View.VISIBLE && cameraRefreshUrl != null && !cameraRefreshUrl.isEmpty() && cameraRefreshSeconds > 0) {
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Authorization", "Bearer " + AppSettings.token(MainActivity.this));
+                    cameraView.loadUrl(resolveUrl(cameraRefreshUrl), headers);
+                    handler.postDelayed(this, Math.max(2, cameraRefreshSeconds) * 1000L);
+                }
+            } catch (Exception ignored) {}
+        }
+    };
 
     private FrameLayout root;
     private ImageView backgroundImageView;
@@ -141,6 +153,7 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
     private FrameLayout alertView;
     private TextView alertText;
     private WebView cameraView;
+    private Runnable cameraRefreshRunnable;
     private View blackView;
 
     private HaWebSocketClient wsClient;
@@ -785,6 +798,7 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
         tickerView.setMarqueeRepeatLimit(-1);
         tickerView.setSelected(true);
         FrameLayout.LayoutParams tickerParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, dp(38), Gravity.BOTTOM);
+        tickerParams.setMargins(0, 0, 0, 0);
         tickerView.setVisibility(View.GONE);
         root.addView(tickerView, tickerParams);
 
@@ -800,8 +814,9 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
         root.addView(clockView, clockParams);
 
         weatherView = overlayText(16, Color.WHITE, 0x99000000, Gravity.CENTER);
-        FrameLayout.LayoutParams weatherParams = new FrameLayout.LayoutParams(dp(220), dp(52), Gravity.TOP | Gravity.LEFT);
-        weatherParams.setMargins(dp(12), dp(12), 0, 0);
+        weatherView.setSingleLine(false);
+        FrameLayout.LayoutParams weatherParams = new FrameLayout.LayoutParams(dp(260), dp(86), Gravity.TOP | Gravity.LEFT);
+        weatherParams.setMargins(dp(12), dp(12), dp(12), dp(12));
         weatherView.setVisibility(View.GONE);
         root.addView(weatherView, weatherParams);
 
@@ -814,18 +829,37 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
         setupWebView(cameraView);
         cameraView.setBackgroundColor(Color.TRANSPARENT);
         FrameLayout.LayoutParams cameraParams = new FrameLayout.LayoutParams(dp(320), dp(190), Gravity.RIGHT | Gravity.BOTTOM);
-        cameraParams.setMargins(0, 0, dp(12), dp(50));
+        cameraParams.setMargins(dp(12), dp(12), dp(12), dp(50));
         cameraView.setVisibility(View.GONE);
         root.addView(cameraView, cameraParams);
 
+        cameraTitleView = overlayText(14, Color.WHITE, 0xCC000000, Gravity.CENTER);
+        FrameLayout.LayoutParams cameraTitleParams = new FrameLayout.LayoutParams(dp(320), dp(28), Gravity.RIGHT | Gravity.BOTTOM);
+        cameraTitleParams.setMargins(dp(12), dp(12), dp(12), dp(240));
+        cameraTitleView.setVisibility(View.GONE);
+        root.addView(cameraTitleView, cameraTitleParams);
+
         alertView = new FrameLayout(this);
         alertView.setBackgroundColor(0xEE000000);
+        LinearLayout alertBox = new LinearLayout(this);
+        alertBox.setOrientation(LinearLayout.VERTICAL);
+        alertBox.setGravity(Gravity.CENTER);
+        alertBox.setPadding(dp(28), dp(28), dp(28), dp(28));
         alertText = overlayText(28, Color.WHITE, Color.TRANSPARENT, Gravity.CENTER);
-        alertText.setPadding(dp(28), dp(28), dp(28), dp(28));
-        alertView.addView(alertText, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        alertText.setSingleLine(false);
+        alertBox.addView(alertText, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
+        alertAckButton = new Button(this);
+        alertAckButton.setText("OK");
+        alertAckButton.setVisibility(View.GONE);
+        alertAckButton.setOnClickListener(v -> {
+            alertView.setVisibility(View.GONE);
+            sendStatus("alert_acknowledged", "alert_ack");
+        });
+        alertBox.addView(alertAckButton, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        alertView.addView(alertBox, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         alertView.setVisibility(View.GONE);
         root.addView(alertView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-        alertView.setOnClickListener(v -> alertView.setVisibility(View.GONE));
+        alertView.setOnClickListener(v -> { if (!alertRequiresAck) alertView.setVisibility(View.GONE); });
 
         blackView = new View(this);
         blackView.setBackgroundColor(Color.BLACK);
@@ -909,6 +943,10 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
             case "reload_page":
                 if (webView != null) webView.reload();
                 break;
+            case "clear_webview_cache":
+            case "clear_browser_cache":
+                clearWebViewCache();
+                break;
             case "rotation":
             case "set_pages":
                 configureRotation(payload);
@@ -950,6 +988,14 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
                 break;
             case "show_overlay":
                 showOverlay(payload);
+                break;
+            case "status_overlay":
+            case "show_status_overlay":
+                showStatusOverlayPayload(payload);
+                break;
+            case "overlay_sequence":
+            case "show_overlay_sequence":
+                showOverlaySequencePayload(payload);
                 break;
             case "background_slideshow":
             case "set_background_slideshow":
@@ -1102,6 +1148,15 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
                 break;
             case "clear":
                 clear(payload.optString("target", "all"));
+                break;
+            case "clear_banner":
+                clear("banner");
+                break;
+            case "clear_weather":
+                clear("weather");
+                break;
+            case "clear_camera":
+                clear("camera");
                 break;
             case "motion_detection":
                 if (payload.optBoolean("enabled", true)) startMotionDetection(); else stopMotionDetection();
@@ -1882,7 +1937,10 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
         else if ("alert".equals(type) || "fullscreen".equals(type)) showAlertPayload(payload);
         else if ("clock".equals(type)) showClockPayload(payload);
         else if ("weather".equals(type)) showWeatherPayload(payload);
-        else if ("camera".equals(type)) showCameraPayload(payload);
+        else if ("camera".equals(type) || "camera_overlay".equals(type)) showCameraPayload(payload);
+        else if ("status".equals(type) || "status_overlay".equals(type)) showStatusOverlayPayload(payload);
+        else if ("page".equals(type) || "screen".equals(type)) gotoScreen(payload.optString("url", payload.optString("path", payload.optString("page_id", ""))));
+        else if ("clear".equals(type)) clear(payload.optString("target", "overlays"));
         else showBannerPayload(payload);
     }
 
@@ -1890,11 +1948,12 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
     private void showTickerPayload(JSONObject payload) {
         if (payload.optBoolean("wake_screen", false)) setScreen("on");
         String text = payload.optString("text", payload.optString("message", ""));
+        String separator = payload.optString("separator", "   •   ");
         JSONArray messages = payload.optJSONArray("messages");
         if ((text == null || text.isEmpty()) && messages != null) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < messages.length(); i++) {
-                if (i > 0) sb.append("   •   ");
+                if (i > 0) sb.append(separator);
                 Object item = messages.opt(i);
                 if (item instanceof JSONObject) {
                     JSONObject obj = (JSONObject) item;
@@ -1909,6 +1968,11 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
         }
         String icon = payload.optString("icon", "");
         if (!icon.isEmpty() && text != null && !text.startsWith(icon)) text = icon + " " + text;
+        String prefix = payload.optString("prefix", "");
+        String suffix = payload.optString("suffix", "");
+        if (text != null && !text.isEmpty()) text = prefix + text + suffix;
+        applyOverlayFrame(tickerView, payload, payload.optString("position", "bottom"), -1, payload.optInt("height", 38), dp(0));
+        applyTextAppearance(tickerView, payload, 16);
         applyViewColors(tickerView, payload);
         showTicker(text, payload.optBoolean("enabled", payload.optBoolean("visible", true)));
         int duration = payload.optInt("duration", payload.optInt("auto_hide_seconds", 0));
@@ -1918,27 +1982,22 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
     private void updateTickerConfig(JSONObject payload) {
         boolean enabled = payload.optBoolean("enabled", true);
         String text = payload.optString("text", payload.optString("message", ""));
+        String separator = payload.optString("separator", "   •   ");
         if (text.isEmpty()) {
             JSONArray messages = payload.optJSONArray("fixed_messages");
             if (messages == null) messages = payload.optJSONArray("messages");
             if (messages != null) {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < messages.length(); i++) {
-                    if (i > 0) sb.append("   •   ");
+                    if (i > 0) sb.append(separator);
                     sb.append(messages.optString(i));
                 }
                 text = sb.toString();
             }
         }
+        applyOverlayFrame(tickerView, payload, payload.optString("position", "bottom"), -1, payload.optInt("height", 38), dp(0));
+        applyTextAppearance(tickerView, payload, 16);
         applyViewColors(tickerView, payload);
-        int height = payload.optInt("height", 0);
-        if (height > 0) {
-            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) tickerView.getLayoutParams();
-            lp.height = dp(height);
-            String pos = payload.optString("position", "bottom").toLowerCase(Locale.US);
-            lp.gravity = "top".equals(pos) ? Gravity.TOP : Gravity.BOTTOM;
-            tickerView.setLayoutParams(lp);
-        }
         showTicker(text, enabled && !text.isEmpty());
     }
 
@@ -1953,7 +2012,12 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
     private void showBannerPayload(JSONObject payload) {
         if (payload.optBoolean("wake_screen", false)) setScreen("on");
         String text = joinTitleMessage(payload);
-        applyViewColors(bannerView, payload);
+        String position = payload.optString("position", "top");
+        int height = payload.optInt("height", payload.optInt("height_dp", 58));
+        int width = payload.optInt("width", payload.optInt("width_dp", -1));
+        applyOverlayFrame(bannerView, payload, position, width, height, dp(0));
+        applyTextAppearance(bannerView, payload, 18);
+        applySeverityOrPayloadColor(bannerView, payload, 0xDD0D47A1);
         showBanner(text, payload.optInt("duration", 0));
         maybeSoundVibrateTts(payload);
     }
@@ -1967,7 +2031,16 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
             showBannerPayload(payload);
         } else {
             String text = joinTitleMessage(payload);
-            applyViewColors(alertText, payload);
+            alertRequiresAck = payload.optBoolean("require_ack", payload.optBoolean("requires_ack", false));
+            if (alertAckButton != null) {
+                alertAckButton.setText(payload.optString("ack_label", payload.optString("button_label", "OK")));
+                alertAckButton.setVisibility(alertRequiresAck ? View.VISIBLE : View.GONE);
+            }
+            boolean panelMode = "panel".equals(mode) || "card".equals(mode);
+            applyOverlayFrame(alertView, payload, panelMode ? payload.optString("position", "center") : "fullscreen", panelMode ? payload.optInt("width", 380) : -1, panelMode ? payload.optInt("height", 240) : -1, dp(12));
+            applyTextAppearance(alertText, payload, panelMode ? 20 : 28);
+            applySeverityOrPayloadColor(alertText, payload, Color.TRANSPARENT);
+            applyAlertBackground(payload, panelMode);
             showAlert(text, payload.optInt("duration", 0));
         }
         maybeSoundVibrateTts(payload);
@@ -1975,6 +2048,8 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
 
     private void showClockPayload(JSONObject payload) {
         if (payload.optBoolean("wake_screen", false)) setScreen("on");
+        applyOverlayFrame(clockView, payload, payload.optString("position", "top-right"), payload.optInt("width", 160), payload.optInt("height", 56), dp(12));
+        applyTextAppearance(clockView, payload, 24);
         applyViewColors(clockView, payload);
         clockView.setVisibility(payload.optBoolean("visible", true) ? View.VISIBLE : View.GONE);
         int duration = payload.optInt("duration", 0);
@@ -1983,9 +2058,18 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
 
     private void showWeatherPayload(JSONObject payload) {
         if (payload.optBoolean("wake_screen", false)) setScreen("on");
+        if (!payload.optBoolean("visible", true)) { weatherView.setVisibility(View.GONE); return; }
         String title = payload.optString("title", "Wetter");
         String text = payload.optString("text", payload.optString("message", payload.optString("entity_id", "")));
-        weatherView.setText(title.isEmpty() ? text : title + "\n" + text);
+        String icon = payload.optString("icon", "");
+        String line = title.isEmpty() ? text : title + "\n" + text;
+        if (!icon.isEmpty() && !line.startsWith(icon)) line = icon + " " + line;
+        weatherView.setText(line);
+        String layout = payload.optString("layout", "compact");
+        int defaultHeight = "full".equals(layout) ? 130 : 86;
+        int defaultWidth = "full".equals(layout) ? 330 : 260;
+        applyOverlayFrame(weatherView, payload, payload.optString("position", "top-left"), payload.optInt("width", defaultWidth), payload.optInt("height", defaultHeight), dp(12));
+        applyTextAppearance(weatherView, payload, 16);
         applyViewColors(weatherView, payload);
         weatherView.setVisibility(View.VISIBLE);
         int duration = payload.optInt("duration", 0);
@@ -1994,32 +2078,232 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
 
     private void showCameraPayload(JSONObject payload) {
         if (payload.optBoolean("wake_screen", false)) setScreen("on");
+        boolean visible = payload.optBoolean("visible", true);
         String url = payload.optString("url", payload.optString("media_url", payload.optString("path", "")));
         String entityId = payload.optString("entity_id", "");
         if (url.isEmpty() && entityId.startsWith("camera.")) url = "/api/camera_proxy/" + entityId;
-        showCamera(url, payload.optBoolean("visible", true));
+        if (!visible) {
+            hideCameraOverlay();
+            return;
+        }
+        applyCameraFrame(payload);
+        String title = payload.optString("title", "");
+        if (cameraTitleView != null) {
+            cameraTitleView.setText(title);
+            cameraTitleView.setVisibility(title.isEmpty() ? View.GONE : View.VISIBLE);
+            applyTextAppearance(cameraTitleView, payload, 14);
+            applyViewColors(cameraTitleView, payload);
+        }
+        cameraRefreshUrl = url;
+        cameraRefreshSeconds = payload.optInt("refresh_seconds", 0);
+        showCamera(url, true);
+        handler.removeCallbacks(cameraRefreshRunnable);
+        if (cameraRefreshSeconds > 0) handler.postDelayed(cameraRefreshRunnable, Math.max(2, cameraRefreshSeconds) * 1000L);
         int duration = payload.optInt("duration", 0);
-        if (duration > 0) handler.postDelayed(() -> cameraView.setVisibility(View.GONE), duration * 1000L);
+        if (duration > 0) handler.postDelayed(() -> hideCameraOverlay(), duration * 1000L);
+    }
+
+    private void showStatusOverlayPayload(JSONObject payload) {
+        if (payload.optBoolean("wake_screen", false)) setScreen("on");
+        String mode = payload.optString("mode", "panel");
+        String title = payload.optString("title", "Status");
+        String message = payload.optString("text", payload.optString("message", ""));
+        JSONArray rows = payload.optJSONArray("rows");
+        if ((message == null || message.isEmpty()) && rows != null) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < rows.length(); i++) {
+                Object item = rows.opt(i);
+                if (i > 0) sb.append("\n");
+                if (item instanceof JSONObject) {
+                    JSONObject row = (JSONObject) item;
+                    String icon = row.optString("icon", "");
+                    if (!icon.isEmpty()) sb.append(icon).append(" ");
+                    sb.append(row.optString("label", row.optString("name", "")));
+                    String value = row.optString("value", "");
+                    if (!value.isEmpty()) sb.append(": ").append(value);
+                } else {
+                    sb.append(String.valueOf(item));
+                }
+            }
+            message = sb.toString();
+        }
+        try {
+            JSONObject next = new JSONObject(payload.toString());
+            next.put("title", title);
+            next.put("message", message);
+            next.put("mode", "banner".equals(mode) ? "banner" : ("fullscreen".equals(mode) ? "fullscreen" : "panel"));
+            next.put("duration", payload.optInt("duration", 20));
+            if (!next.has("color")) next.put("color", "#111827");
+            if (!next.has("text_color")) next.put("text_color", "#ffffff");
+            if ("banner".equals(mode)) showBannerPayload(next); else showAlertPayload(next);
+        } catch (Exception ignored) {}
+    }
+
+    private void showOverlaySequencePayload(JSONObject payload) {
+        if (payload.optBoolean("wake_screen", true)) setScreen("on");
+        JSONArray steps = payload.optJSONArray("steps");
+        if (steps == null) steps = payload.optJSONArray("sequence");
+        if (steps == null || steps.length() == 0) return;
+        int repeat = Math.max(1, payload.optInt("repeat", 1));
+        int defaultDuration = Math.max(1, payload.optInt("default_duration", payload.optInt("duration", 8)));
+        int gap = Math.max(0, payload.optInt("gap", 1));
+        boolean clearBetween = payload.optBoolean("clear_between", false);
+        long delay = 0L;
+        for (int r = 0; r < repeat; r++) {
+            for (int i = 0; i < steps.length(); i++) {
+                JSONObject step = steps.optJSONObject(i);
+                if (step == null) {
+                    step = new JSONObject();
+                    try { step.put("type", "banner"); step.put("message", steps.optString(i)); } catch (Exception ignored) {}
+                }
+                try {
+                    final JSONObject stepCopy = new JSONObject(step.toString());
+                    if (!stepCopy.has("duration")) stepCopy.put("duration", defaultDuration);
+                    handler.postDelayed(() -> { if (clearBetween) clear("overlays"); showOverlay(stepCopy); }, delay * 1000L);
+                    delay += Math.max(1, stepCopy.optInt("duration", defaultDuration)) + gap;
+                } catch (Exception ignored) {}
+            }
+        }
+        if (payload.optBoolean("clear_after", false)) handler.postDelayed(() -> clear("overlays"), delay * 1000L);
     }
 
     private String joinTitleMessage(JSONObject payload) {
+        String icon = payload.optString("icon", "");
         String title = payload.optString("title", "");
         String message = payload.optString("text", payload.optString("message", ""));
-        if (title.isEmpty()) return message;
-        if (message.isEmpty()) return title;
-        return title + "\n" + message;
+        String text;
+        if (title.isEmpty()) text = message;
+        else if (message.isEmpty()) text = title;
+        else text = title + "\n" + message;
+        if (!icon.isEmpty() && text != null && !text.startsWith(icon)) return icon + " " + text;
+        return text;
     }
 
     private void applyViewColors(TextView view, JSONObject payload) {
-        String color = payload.optString("color", "");
+        if (view == null || payload == null) return;
+        String color = payload.optString("color", payload.optString("background_color", ""));
         if (!color.isEmpty()) {
-            try { view.setBackgroundColor(Color.parseColor(color)); } catch (Exception ignored) {}
+            try { view.setBackgroundColor(withOpacity(Color.parseColor(color), payload.optInt("opacity", 100))); } catch (Exception ignored) {}
         }
         String textColor = payload.optString("text_color", payload.optString("foreground", ""));
         if (!textColor.isEmpty()) {
             try { view.setTextColor(Color.parseColor(textColor)); } catch (Exception ignored) {}
         }
     }
+
+    private void applySeverityOrPayloadColor(TextView view, JSONObject payload, int fallbackColor) {
+        if (view == null) return;
+        int color = fallbackColor;
+        String severity = payload.optString("severity", "").toLowerCase(Locale.US);
+        if ("success".equals(severity)) color = 0xDD16803D;
+        else if ("warning".equals(severity)) color = 0xDDF59E0B;
+        else if ("critical".equals(severity) || "error".equals(severity)) color = 0xDDBC2626;
+        else if ("info".equals(severity)) color = 0xDD2563EB;
+        String explicit = payload.optString("color", payload.optString("background_color", ""));
+        if (!explicit.isEmpty()) {
+            try { color = Color.parseColor(explicit); } catch (Exception ignored) {}
+        }
+        try { view.setBackgroundColor(withOpacity(color, payload.optInt("opacity", 100))); } catch (Exception ignored) {}
+        String textColor = payload.optString("text_color", payload.optString("foreground", ""));
+        if (!textColor.isEmpty()) {
+            try { view.setTextColor(Color.parseColor(textColor)); } catch (Exception ignored) {}
+        }
+    }
+
+    private void applyAlertBackground(JSONObject payload, boolean panelMode) {
+        int color = panelMode ? 0xDD111827 : 0xEE000000;
+        String severity = payload.optString("severity", "").toLowerCase(Locale.US);
+        if ("success".equals(severity)) color = panelMode ? 0xEE064E3B : 0xEE022C22;
+        else if ("warning".equals(severity)) color = panelMode ? 0xEEEAB308 : 0xEE713F12;
+        else if ("critical".equals(severity) || "error".equals(severity)) color = panelMode ? 0xEE991B1B : 0xEE450A0A;
+        else if ("info".equals(severity)) color = panelMode ? 0xEE1D4ED8 : 0xEE172554;
+        String explicit = payload.optString("color", payload.optString("background_color", ""));
+        if (!explicit.isEmpty()) {
+            try { color = Color.parseColor(explicit); } catch (Exception ignored) {}
+        }
+        try { alertView.setBackgroundColor(withOpacity(color, payload.optInt("opacity", panelMode ? 94 : 92))); } catch (Exception ignored) {}
+    }
+
+    private void applyTextAppearance(TextView view, JSONObject payload, int defaultSp) {
+        if (view == null || payload == null) return;
+        int fontSize = payload.optInt("font_size", payload.optInt("text_size", defaultSp));
+        if (fontSize > 0) view.setTextSize(fontSize);
+        int pad = payload.optInt("padding", payload.optInt("padding_dp", 12));
+        view.setPadding(dp(pad), dp(Math.max(4, pad / 2)), dp(pad), dp(Math.max(4, pad / 2)));
+        String gravity = payload.optString("align", payload.optString("gravity", ""));
+        if ("left".equals(gravity)) view.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+        else if ("right".equals(gravity)) view.setGravity(Gravity.CENTER_VERTICAL | Gravity.RIGHT);
+        else if ("top".equals(gravity)) view.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        else if ("bottom".equals(gravity)) view.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        else if (!gravity.isEmpty()) view.setGravity(Gravity.CENTER);
+    }
+
+    private void applyOverlayFrame(View view, JSONObject payload, String defaultPosition, int defaultWidthDp, int defaultHeightDp, int marginPx) {
+        if (view == null) return;
+        String position = payload.optString("position", defaultPosition == null ? "center" : defaultPosition).toLowerCase(Locale.US);
+        int widthDp = payload.optInt("width_dp", payload.optInt("width", defaultWidthDp));
+        int heightDp = payload.optInt("height_dp", payload.optInt("height", defaultHeightDp));
+        int width = widthDp <= 0 ? FrameLayout.LayoutParams.MATCH_PARENT : dp(widthDp);
+        int height = heightDp <= 0 ? FrameLayout.LayoutParams.MATCH_PARENT : dp(heightDp);
+        if ("fullscreen".equals(position)) {
+            width = FrameLayout.LayoutParams.MATCH_PARENT;
+            height = FrameLayout.LayoutParams.MATCH_PARENT;
+        }
+        int gravity = gravityForPosition(position, Gravity.CENTER);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(width, height, gravity);
+        int margin = payload.optInt("margin", payload.optInt("margin_dp", marginPx <= 0 ? 0 : Math.max(0, marginPx / Math.max(1, getResources().getDisplayMetrics().densityDpi / 160))));
+        int m = dp(margin);
+        lp.setMargins(m, m, m, m);
+        view.setLayoutParams(lp);
+    }
+
+    private void applyCameraFrame(JSONObject payload) {
+        String position = payload.optString("position", "bottom-right");
+        int width = payload.optInt("width", payload.optInt("width_dp", "fullscreen".equals(position) ? -1 : 320));
+        int height = payload.optInt("height", payload.optInt("height_dp", "fullscreen".equals(position) ? -1 : 190));
+        applyOverlayFrame(cameraView, payload, position, width, height, dp(12));
+        if (cameraTitleView == null) return;
+        if ("fullscreen".equals(position)) {
+            try {
+                JSONObject titlePayload = new JSONObject(payload.toString());
+                titlePayload.put("position", "top");
+                titlePayload.put("width", -1);
+                titlePayload.put("height", 32);
+                applyOverlayFrame(cameraTitleView, titlePayload, "top", -1, 32, dp(0));
+            } catch (Exception ignored) {}
+        } else {
+            try {
+                JSONObject titlePayload = new JSONObject(payload.toString());
+                titlePayload.put("height", 28);
+                titlePayload.put("width", width);
+                applyOverlayFrame(cameraTitleView, titlePayload, position, width, 28, dp(12));
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private int gravityForPosition(String position, int fallback) {
+        if (position == null) return fallback;
+        switch (position.toLowerCase(Locale.US)) {
+            case "top": return Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+            case "bottom": return Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            case "left": return Gravity.LEFT | Gravity.CENTER_VERTICAL;
+            case "right": return Gravity.RIGHT | Gravity.CENTER_VERTICAL;
+            case "top-left": return Gravity.TOP | Gravity.LEFT;
+            case "top-right": return Gravity.TOP | Gravity.RIGHT;
+            case "bottom-left": return Gravity.BOTTOM | Gravity.LEFT;
+            case "bottom-right": return Gravity.BOTTOM | Gravity.RIGHT;
+            case "fullscreen": return Gravity.CENTER;
+            case "center": return Gravity.CENTER;
+            default: return fallback;
+        }
+    }
+
+    private int withOpacity(int color, int opacityPercent) {
+        int alpha = Math.max(0, Math.min(100, opacityPercent)) * 255 / 100;
+        return (color & 0x00FFFFFF) | (alpha << 24);
+    }
+
+
 
     private void maybeSoundVibrateTts(JSONObject payload) {
         applyAudioSettingsFromPayload(payload);
@@ -2599,13 +2883,41 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
     }
 
     private void clear(String target) {
-        boolean alerts = "alerts".equals(target) || "alert".equals(target);
-        if ("all".equals(target) || "ticker".equals(target)) tickerView.setVisibility(View.GONE);
+        boolean alerts = "alerts".equals(target) || "alert".equals(target) || "overlays".equals(target);
+        if ("all".equals(target) || "overlays".equals(target) || "ticker".equals(target)) tickerView.setVisibility(View.GONE);
         if ("all".equals(target) || alerts || "banner".equals(target)) bannerView.setVisibility(View.GONE);
         if ("all".equals(target) || alerts || "alert".equals(target)) alertView.setVisibility(View.GONE);
         if ("all".equals(target) || alerts || "weather".equals(target)) weatherView.setVisibility(View.GONE);
-        if ("all".equals(target) || alerts || "camera".equals(target)) cameraView.setVisibility(View.GONE);
+        if ("all".equals(target) || alerts || "camera".equals(target)) { cameraView.setVisibility(View.GONE); cancelCameraRefresh(); }
         if ("all".equals(target) || "screen".equals(target)) blackView.setVisibility(View.GONE);
+    }
+
+    private void clearWebViewCache() {
+        handler.post(() -> {
+            try {
+                if (webView != null) {
+                    webView.stopLoading();
+                    webView.clearCache(true);
+                    webView.clearHistory();
+                    webView.clearFormData();
+                }
+                if (cameraView != null) {
+                    cameraView.clearCache(true);
+                    cameraView.clearHistory();
+                }
+                try { WebStorage.getInstance().deleteAllData(); } catch (Exception ignored) {}
+                try {
+                    CookieManager cm = CookieManager.getInstance();
+                    if (Build.VERSION.SDK_INT >= 21) cm.removeAllCookies(null); else cm.removeAllCookie();
+                    cm.flush();
+                } catch (Exception ignored) {}
+                sendStatus("webview_cache_cleared", "clear_webview_cache");
+                Toast.makeText(this, t("WebView-Cache geleert", "WebView cache cleared"), Toast.LENGTH_SHORT).show();
+                if (webView != null) webView.reload();
+            } catch (Throwable t) {
+                sendStatus("webview_cache_clear_failed", "clear_webview_cache");
+            }
+        });
     }
 
     private void applyFullscreen(boolean enabled) {
@@ -3036,7 +3348,7 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
             body.put("device_id", AppSettings.deviceId(this));
             body.put("app_id", "ha_android_kiosk");
             body.put("app_name", "HA Android Kiosk");
-            body.put("app_version", "1.9.13");
+            body.put("app_version", "1.9.16");
             body.put("device_name", AppSettings.get(this, "device_name", Build.MANUFACTURER + " " + Build.MODEL));
             body.put("manufacturer", Build.MANUFACTURER);
             body.put("model", Build.MODEL);
@@ -3065,9 +3377,9 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
             body.put("name", AppSettings.get(this, "device_name", Build.MANUFACTURER + " " + Build.MODEL));
             body.put("manufacturer", Build.MANUFACTURER);
             body.put("model", Build.MODEL);
-            body.put("app_version", "1.9.13");
+            body.put("app_version", "1.9.16");
             JSONArray caps = new JSONArray();
-            String[] values = {"webview", "set_page", "rotation", "touch_pause", "ticker", "banner", "toast", "alert", "clock", "weather", "camera_overlay", "brightness", "volume", "orientation", "vibrate", "screen_blank", "motion_detection", "camera_front", "camera_motion_detection", "light_sensor", "hide_ha_header", "media_player", "services_v3", "services_v4", "oauth_login", "mobile_app_registration", "tts", "background_slideshow", "background_first", "transparent_webview", "force_mobile_viewport", "self_sync", "cached_config", "visual_watchdog", "page_zoom_background_safe", "audio_boost", "memory_safe_background", "low_ram_zoom", "dashboard_language"};
+            String[] values = {"webview", "set_page", "rotation", "touch_pause", "ticker", "banner", "toast", "alert", "clock", "weather", "camera_overlay", "brightness", "volume", "orientation", "vibrate", "screen_blank", "motion_detection", "camera_front", "camera_motion_detection", "light_sensor", "hide_ha_header", "media_player", "services_v3", "services_v4", "oauth_login", "mobile_app_registration", "tts", "background_slideshow", "background_first", "transparent_webview", "force_mobile_viewport", "self_sync", "cached_config", "visual_watchdog", "page_zoom_background_safe", "audio_boost", "memory_safe_background", "low_ram_zoom", "dashboard_language", "enhanced_overlays", "status_overlay", "overlay_sequence"};
             for (String v : values) caps.put(v);
             body.put("capabilities", caps);
             body.put("current_url", currentUrl);
@@ -3103,6 +3415,11 @@ public class MainActivity extends Activity implements HaWebSocketClient.Listener
             body.put("media_url", currentMediaUrl);
             body.put("media_queue_index", mediaQueueIndex);
             body.put("media_queue_size", mediaQueue.size());
+            body.put("ticker_visible", tickerView != null && tickerView.getVisibility() == View.VISIBLE);
+            body.put("banner_visible", bannerView != null && bannerView.getVisibility() == View.VISIBLE);
+            body.put("alert_visible", alertView != null && alertView.getVisibility() == View.VISIBLE);
+            body.put("weather_visible", weatherView != null && weatherView.getVisibility() == View.VISIBLE);
+            body.put("camera_overlay_visible", cameraView != null && cameraView.getVisibility() == View.VISIBLE);
             body.put("background_enabled", backgroundEnabled);
             body.put("background_index", backgroundIndex);
             body.put("background_count", backgroundImages.size());
